@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>座位管理 - 多巴胺系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --pink: #ff6b9d;
+            --bg: #fdf2f8;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --border: #f1f2f6;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
+
+        .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1); position: sticky; top: 0; z-index: 100; }
+        .navbar h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+        .back-btn { background: var(--bg); color: var(--primary); border: 2px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; text-decoration: none; display: inline-block; }
+        .back-btn:hover { background: var(--primary); color: white; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(142, 68, 173, 0.1); }
+        
+        .classroom-container { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 40px; background: #f8f9fa; border-radius: 15px; border: 2px dashed #ddd; overflow-x: auto; min-height: 600px; }
+        .blackboard { width: 60%; height: 50px; background: #2d3436; color: white; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-bottom: 20px; font-weight: bold; letter-spacing: 2px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .seating-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
+        
+        .seat-unit { width: 110px; height: 150px; display: flex; flex-direction: column; gap: 5px; }
+        .seat-number { text-align: center; font-size: 0.8rem; color: #999; font-weight: bold; }
+        
+        .seat-drop-zone { 
+            flex: 1; background: white; border: 2px solid #dfe6e9; border-radius: 10px; 
+            display: flex; align-items: center; justify-content: center; transition: 0.2s; position: relative; 
+        }
+        .seat-drop-zone.drag-over { background: rgba(142, 68, 173, 0.1); border-color: var(--primary); transform: scale(1.05); box-shadow: 0 0 15px rgba(142, 68, 173, 0.2); }
+        
+        .student-card { 
+            width: 90%; height: 90%; background: white; border-radius: 8px; padding: 8px; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: grab; display: flex; 
+            flex-direction: column; align-items: center; justify-content: center; gap: 4px; 
+            border: 1px solid transparent; z-index: 10;
+        }
+        .student-card:active { cursor: grabbing; }
+        .student-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); border-color: var(--primary); }
+        
+        .card-name { font-size: 1rem; font-weight: bold; color: var(--primary); }
+        .card-score { font-size: 0.85rem; color: var(--pink); font-weight: bold; }
+        .card-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; color: white; }
+        
+        .badge-leader { background: #0984e3; }
+        .badge-vip { background: #fdcb6e; color: #333; }
+        .badge-normal { background: #b2bec3; color: #333; }
+
+        #loading { text-align: center; padding: 50px; color: #999; }
+    </style>
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <a href="#" id="back-link" class="back-btn">← 返回列表</a>
+        <h1 id="class-title">座位编排</h1>
+        <div style="width: 80px;"></div>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="container">
+        <div class="card">
+            <div id="loading">正在加载座位数据...</div>
+            
+            <div id="seats-view" style="display: none;">
+                <div class="classroom-container">
+                    <div class="blackboard">讲 台 BLACKBOARD</div>
+                    <div class="seating-grid" id="seating-grid">
+                        <!-- 座位将通过 JS 生成 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚙️ 1. 配置
+        const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let studentsData = []; 
+        let currentClassId = ''; // 当前班级ID
+
+        // 🚀 2. 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentClassId = urlParams.get('id');
+            
+            // 设置返回链接，带上班级ID
+            document.getElementById('back-link').href = `class.html?id=${currentClassId}`;
+
+            if (currentClassId) {
+                document.getElementById('class-title').innerText = `${currentClassId}班 - 座位管理`;
+                loadClassData(currentClassId);
+            }
+        });
+
+        // 3. 加载数据 (关键修改：增加了 class_name 筛选)
+        async function loadClassData(className) {
+            // 只查询属于这个班级的学生
+            const { data, error } = await client
+                .from('students')
+                .select('*')
+                .eq('class_name', className) // <--- 关键：筛选班级
+                .order('id');
+            
+            if (error) { 
+                console.error(error); 
+                document.getElementById('loading').innerText = '加载失败';
+                return; 
+            }
+            
+            studentsData = data || [];
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('seats-view').style.display = 'block';
+            renderSeats();
+        }
+
+        // 4. 座位视图逻辑
+        function renderSeats() {
+            const grid = document.getElementById('seating-grid');
+            grid.innerHTML = '';
+
+            // 5列 x 10行 = 50个座位
+            const totalSeats = 50;
+
+            for (let i = 1; i <= totalSeats; i++) {
+                const seatUnit = document.createElement('div');
+                seatUnit.className = 'seat-unit';
+
+                // 查找坐在该位置的学生
+                const studentInSeat = studentsData.find(s => s.seat_index === i);
+
+                seatUnit.innerHTML = `
+                    <div class="seat-number">${i}号位</div>
+                    <div class="seat-drop-zone" 
+                         data-seat="${i}" 
+                         ondrop="drop(event, ${i})" 
+                         ondragover="allowDrop(event)"
+                         ondragenter="dragEnter(event)"
+                         ondragleave="dragLeave(event)">
+                    </div>
+                `;
+
+                const dropZone = seatUnit.querySelector('.seat-drop-zone');
+
+                // 如果该座位有人，渲染学生卡片
+                if (studentInSeat) {
+                    const card = createStudentCard(studentInSeat);
+                    dropZone.appendChild(card);
+                }
+
+                grid.appendChild(seatUnit);
+            }
+        }
+
+        // 创建学生卡片 HTML
+        function createStudentCard(stu) {
+            const card = document.createElement('div');
+            card.className = 'student-card';
+            card.draggable = true;
+            card.id = `stu-card-${stu.id}`;
+            
+            // 绑定拖拽开始事件
+            card.ondragstart = (e) => drag(e, stu.id);
+
+            let badgeClass = 'badge-normal';
+            if (stu.identity === '组长') badgeClass = 'badge-leader';
+            if (stu.identity === 'VIP') badgeClass = 'badge-vip';
+
+            card.innerHTML = `
+                <div class="card-name">${stu.name}</div>
+                <div class="card-score">${stu.score}分</div>
+                <span class="card-badge ${badgeClass}">${stu.identity || '平民'}</span>
+            `;
+            return card;
+        }
+
+        // --- 拖拽逻辑 ---
+
+        window.allowDrop = function(ev) { ev.preventDefault(); }
+        window.dragEnter = function(ev) {
+            ev.preventDefault();
+            if (ev.target.classList.contains('seat-drop-zone')) {
+                ev.target.classList.add('drag-over');
+            }
+        }
+        window.dragLeave = function(ev) {
+            if (ev.target.classList.contains('seat-drop-zone')) {
+                ev.target.classList.remove('drag-over');
+            }
+        }
+        window.drag = function(ev, stuId) {
+            ev.dataTransfer.setData("text", stuId);
+        }
+
+        // 放置处理
+        window.drop = async function(ev, targetSeatIndex) {
+            ev.preventDefault();
+            
+            const zones = document.querySelectorAll('.seat-drop-zone');
+            zones.forEach(z => z.classList.remove('drag-over'));
+
+            const draggedStuId = ev.dataTransfer.getData("text");
+            const draggedStu = studentsData.find(s => String(s.id) === String(draggedStuId));
+            
+            if (!draggedStu) return;
+
+            const targetSeatStudent = studentsData.find(s => s.seat_index === targetSeatIndex);
+            const originalSeatIndex = draggedStu.seat_index;
+
+            // 更新本地数据
+            draggedStu.seat_index = targetSeatIndex;
+            if (targetSeatStudent) {
+                targetSeatStudent.seat_index = originalSeatIndex;
+            }
+
+            // 更新数据库 (关键修改：确保只更新当前班级学生)
+            // 1. 更新拖拽的学生
+            await client.from('students')
+                .update({ seat_index: targetSeatIndex })
+                .eq('id', draggedStuId);
+            
+            // 2. 如果被挤走的学生存在，更新他的位置
+            if (targetSeatStudent) {
+                await client.from('students')
+                    .update({ seat_index: originalSeatIndex })
+                    .eq('id', targetSeatStudent.id);
+            }
+
+            renderSeats();
+        }
+    </script>
+</body>
+</html>

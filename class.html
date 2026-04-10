@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>班级积分管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --pink: #ff6b9d;
+            --bg: #fdf2f8;
+            --card-bg: #ffffff;
+            --text: #2d3436;
+            --border: #f1f2f6;
+            --success: #2ecc71;
+            --danger: #ff7675;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
+
+        /* 导航栏 */
+        .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1); position: sticky; top: 0; z-index: 100; }
+        .navbar h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
+        .nav-btn { padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid var(--primary); transition: 0.3s; }
+        .btn-back { background: var(--bg); color: var(--primary); }
+        .btn-back:hover { background: var(--primary); color: white; }
+        .btn-seats { background: var(--primary); color: white; border: 2px solid var(--primary); text-decoration: none; margin-left: 10px;}
+        .btn-seats:hover { background: #732d91; }
+
+        /* 主容器 */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(142, 68, 173, 0.1); }
+        
+        /* 表格样式 */
+        table { width: 100%; border-collapse: collapse; }
+        th { background: rgba(142, 68, 173, 0.05); color: var(--primary); padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary); }
+        td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+        tr:hover { background: rgba(255, 255, 255, 0.8); }
+        .stu-link { color: var(--text); text-decoration: none; font-weight: bold; }
+        .stu-link:hover { color: var(--pink); }
+        .badge { padding: 5px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; }
+        .badge-leader { background: #0984e3; }
+        .badge-vip { background: #fdcb6e; color: #333; }
+        .badge-normal { background: #b2bec3; color: #333; }
+
+        /* 行内操作 */
+        .action-cell { display: flex; gap: 8px; align-items: center; }
+        .mini-select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; }
+        .select-add { color: var(--success); font-weight: bold; }
+        .select-sub { color: var(--danger); font-weight: bold; }
+        .mini-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: white; }
+        .btn-submit { background: var(--primary); }
+        .btn-submit:hover { background: #732d91; }
+        .score-preview { font-size: 0.9rem; font-weight: bold; min-width: 40px; text-align: center; }
+
+        #loading { text-align: center; padding: 50px; color: #999; }
+        
+        /* 弹窗样式 */
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(3px); }
+        .modal-content { background-color: #fff; margin: 10% auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: popIn 0.3s; }
+        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .modal-title { font-size: 1.2rem; color: var(--primary); margin: 0; }
+        .close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close:hover { color: var(--danger); }
+        .form-group { margin-bottom: 15px; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <div style="display: flex; align-items: center;">
+            <button class="nav-btn btn-back" onclick="location.href='teacher.html'">← 返回</button>
+            <h1 style="margin-left: 20px;" id="class-title">班级管理</h1>
+        </div>
+        <!-- 新增：跳转到座位表的按钮 -->
+        <a href="seats.html" id="btn-seats" class="nav-btn btn-seats">🪑 座位管理</a>
+
+<script>
+    // 在页面加载时，给按钮链接加上 ID
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const classId = urlParams.get('id');
+        if (classId) {
+            document.getElementById('btn-seats').href = `seats.html?id=${classId}`;
+        }
+    });
+</script>
+        
+    </div>
+
+    <!-- 主内容 -->
+    <div class="container">
+        <div class="card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--bg); padding-bottom: 15px;">
+                <h2>👥 学生列表</h2>
+                <span style="color: #999;">☁️ 云端同步中</span>
+            </div>
+
+            <div id="loading">正在加载数据...</div>
+
+            <table id="data-table" style="display: none;">
+                <thead>
+                    <tr>
+                        <th>学号</th>
+                        <th>姓名</th>
+                        <th>身份</th>
+                        <th>小组</th>
+                        <th>当前积分</th>
+                        <th>快速操作</th>
+                    </tr>
+                </thead>
+                <tbody id="student-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 弹窗：修改信息 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">📝 修改信息</h3>
+                <span class="close" onclick="closeModal('editModal')">&times;</span>
+            </div>
+            <input type="hidden" id="edit-id">
+            <div class="form-group">
+                <label>姓名</label>
+                <input type="text" id="edit-name" class="form-control">
+            </div>
+            <div class="form-group">
+                <label>身份</label>
+                <select id="edit-identity" class="form-control"></select>
+            </div>
+            <div class="form-group">
+                <label>小组</label>
+                <input type="text" id="edit-group" class="form-control">
+            </div>
+            <button class="submit-btn" onclick="submitEdit()">保存修改</button>
+        </div>
+    </div>
+
+    <script>
+        // ⚙️ 1. 配置
+        const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let studentsData = []; 
+        let currentClassId = '';
+
+        // 🚀 2. 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            currentClassId = urlParams.get('id');
+            if (currentClassId) {
+                document.getElementById('class-title').innerText = `${currentClassId}班 - 管理`;
+                loadClassData(currentClassId);
+            }
+        });
+
+        // 3. 加载数据
+        async function loadClassData(classId) {
+            const { data, error } = await client.from('students').select('*').eq('class_name', classId).order('id');
+            if (error) { console.error(error); return; }
+            
+            studentsData = data || [];
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('data-table').style.display = 'table';
+            renderTable();
+        }
+
+        // 4. 渲染表格
+        function renderTable() {
+            const listEl = document.getElementById('student-list');
+            listEl.innerHTML = '';
+            
+            studentsData.forEach(stu => {
+                const stuId = String(stu.id); 
+                let badgeClass = 'badge-normal';
+                if (stu.identity === '组长') badgeClass = 'badge-leader';
+                if (stu.identity === 'VIP') badgeClass = 'badge-vip';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${stuId}</td>
+                    <td><a href="student.html?id=${stuId}" class="stu-link">${stu.name}</a></td>
+                    <td><span class="badge ${badgeClass}">${stu.identity || '平民'}</span></td>
+                    <td>${stu.group || '-'}</td>
+                    <td style="font-weight:bold; color:var(--primary); font-size:1.2rem;">${stu.score}</td>
+                    <td>
+                        <div class="action-cell">
+                            <select class="mini-select select-add" onchange="updatePreview(this, '${stuId}')">
+                                <option value="0">加分项</option>
+                            </select>
+                            <select class="mini-select select-sub" onchange="updatePreview(this, '${stuId}')">
+                                <option value="0">扣分项</option>
+                            </select>
+                            <span id="preview-${stuId}" class="score-preview">0</span>
+                            <button class="mini-btn btn-submit" onclick="quickSubmit('${stuId}')">提交</button>
+                        </div>
+                    </td>
+                `;
+                listEl.appendChild(row);
+            });
+            fillSelectOptions();
+        }
+
+        function fillSelectOptions() {
+            const db = JSON.parse(localStorage.getItem('scoreSystemDB'));
+            if (!db || !db.items) return;
+            const addSelects = document.querySelectorAll('.select-add');
+            const subSelects = document.querySelectorAll('.select-sub');
+            db.items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.score;
+                option.text = `${item.name} (${item.score > 0 ? '+' : ''}${item.score})`;
+                if (item.score >= 0) addSelects.forEach(sel => sel.add(option.cloneNode(true)));
+                else subSelects.forEach(sel => sel.add(option.cloneNode(true)));
+            });
+        }
+
+        window.updatePreview = function(selectEl, stuId) {
+            const row = selectEl.closest('tr');
+            const val = parseInt(row.querySelector('.select-add').value) + parseInt(row.querySelector('.select-sub').value);
+            const el = document.getElementById(`preview-${stuId}`);
+            el.innerText = (val > 0 ? '+' : '') + val;
+            el.style.color = val >= 0 ? 'var(--success)' : 'var(--danger)';
+        }
+
+        window.quickSubmit = async function(stuId) {
+            const row = document.getElementById(`preview-${stuId}`).closest('tr');
+            const change = parseInt(row.querySelector('.select-add').value) + parseInt(row.querySelector('.select-sub').value);
+            if (change === 0) return alert('请选择项目');
+
+            const stu = studentsData.find(s => String(s.id) === String(stuId));
+            stu.score += change;
+            
+            await client.from('students').update({ score: stu.score }).eq('id', stuId);
+            await client.from('score_history').insert({
+                student_id: stuId, operator: '班主任', score_change: change,
+                reason: change > 0 ? row.querySelector('.select-add').options[row.querySelector('.select-add').selectedIndex].text : row.querySelector('.select-sub').options[row.querySelector('.select-sub').selectedIndex].text,
+                class_name: currentClassId
+            });
+            
+            renderTable();
+        }
+
+        // --- 修改信息逻辑 ---
+        window.openEditModal = function(id) {
+            const stu = studentsData.find(s => String(s.id) === String(id));
+            if (!stu) return;
+            document.getElementById('edit-id').value = stu.id;
+            document.getElementById('edit-name').value = stu.name;
+            document.getElementById('edit-group').value = stu.group || '';
+            const identitySelect = document.getElementById('edit-identity');
+            identitySelect.innerHTML = '';
+            const db = JSON.parse(localStorage.getItem('scoreSystemDB'));
+            if (db && db.identities) {
+                db.identities.forEach(ident => {
+                    const option = document.createElement('option');
+                    option.value = ident.name;
+                    option.text = ident.name;
+                    identitySelect.add(option);
+                });
+            }
+            identitySelect.value = stu.identity;
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        window.submitEdit = async function() {
+            const id = document.getElementById('edit-id').value;
+            const newName = document.getElementById('edit-name').value;
+            const newIdentity = document.getElementById('edit-identity').value;
+            const newGroup = document.getElementById('edit-group').value;
+
+            await client.from('students').update({
+                name: newName, identity: newIdentity, group: newGroup
+            }).eq('id', id);
+
+            const stu = studentsData.find(s => String(s.id) === String(id));
+            stu.name = newName; stu.identity = newIdentity; stu.group = newGroup;
+            
+            renderTable();
+            closeModal('editModal');
+        }
+
+        window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+</body>
+</html>

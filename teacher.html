@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>教师后台 - 多巴胺积分系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary: #8e44ad;
+            --pink: #ff6b9d;
+            --yellow: #feca57;
+            --bg: #fdf2f8;
+            --card-bg: white;
+            --text: #2d3436;
+            --danger: #ff7675;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); }
+        
+        /* 导航栏 */
+        .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .navbar h1 { margin: 0; color: var(--primary); }
+        .btn-logout { background: var(--pink); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+
+        /* 布局 */
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+        
+        /* 卡片通用样式 */
+        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(142, 68, 173, 0.1); margin-bottom: 30px; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .section-title { color: var(--primary); border-bottom: 3px solid var(--yellow); display: inline-block; padding-bottom: 5px; margin: 0; }
+
+        /* 按钮通用样式 */
+        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn:hover { opacity: 0.8; transform: scale(1.02); }
+
+        /* 班级网格 */
+        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
+        .class-item { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 20px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s; position: relative; }
+        .class-item:hover { background: var(--primary); color: white; transform: translateY(-3px); }
+        .class-item .del-btn { position: absolute; top: 5px; right: 5px; background: var(--danger); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
+        /* 标签样式 */
+        .item-list { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
+        .tag { padding: 8px 15px; border-radius: 15px; color: white; font-size: 14px; display: flex; align-items: center; gap: 8px; }
+        .tag-plus { background: var(--primary); }
+        .tag-minus { background: var(--pink); }
+        .tag-identity { background: #a55eea; }
+        .tag button { background: rgba(0,0,0,0.2); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; }
+
+        /* 输入框组 */
+        .input-group { display: flex; gap: 10px; margin-top: 15px; }
+        .input-group input { padding: 10px; border-radius: 10px; border: 1px solid #ddd; flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🌈 教师管理后台</h1>
+        <button class="btn-logout" onclick="location.href='index.html'">退出登录</button>
+    </div>
+    <div class="container">
+        <!-- 班级管理 -->
+        <div class="card">
+            <div class="section-header">
+                <h2 class="section-title">📚 班级管理</h2>
+                <button class="btn btn-primary" onclick="addNewClass()">+ 新建班级</button>
+            </div>
+            <div class="class-grid" id="class-list">
+                <!-- 班级将通过 JS 加载 -->
+            </div>
+        </div>
+
+        <!-- 身份管理 -->
+        <div class="card">
+            <div class="section-header">
+                <h2 class="section-title">🎖️ 身份管理</h2>
+            </div>
+            <div class="item-list" id="identity-list"></div>
+            <div class="input-group">
+                <input type="text" id="identity-name" placeholder="新身份名称 (如: 纪律委员)">
+                <input type="color" id="identity-color" value="#a55eea" style="flex: 0.2; padding: 2px; height: 42px;">
+                <button class="btn btn-primary" onclick="addIdentity()">添加身份</button>
+            </div>
+        </div>
+
+        <!-- 积分项目管理 -->
+        <div class="card">
+            <div class="section-header">
+                <h2 class="section-title">⚙️ 积分管理</h2>
+            </div>
+            <div class="item-list" id="item-list"></div>
+            <div class="input-group">
+                <input type="text" id="item-name" placeholder="项目名称 (如: 作业优秀)">
+                <input type="number" id="item-score" placeholder="分数 (如: 2 或 -1)" style="flex: 0.5;">
+                <button class="btn btn-primary" onclick="addItem()">添加项目</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚙️ 配置
+        const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 1. 初始化 LocalStorage (仅用于存配置，不存班级)
+        function initDB() {
+            const defaultDB = {
+                identities: [{ name: '组长', color: '#0984e3' }, { name: '课代表', color: '#e17055' }, { name: 'VIP', color: '#fdcb6e' }, { name: '平民', color: '#b2bec3' }],
+                items: [{name: '作业优秀', score: 2}, {name: '迟到', score: -1}]
+            };
+            let db = JSON.parse(localStorage.getItem('scoreSystemDB'));
+            if (!db) {
+                localStorage.setItem('scoreSystemDB', JSON.stringify(defaultDB));
+                return defaultDB;
+            }
+            return db;
+        }
+        let db = initDB();
+
+        // 2. 页面加载时执行
+        window.addEventListener('DOMContentLoaded', () => {
+            loadClasses(); // 从云端加载班级
+            renderConfig(); // 从本地加载配置
+        });
+
+        // 3. 从 Supabase 加载班级
+        async function loadClasses() {
+            const list = document.getElementById('class-list');
+            list.innerHTML = '<div style="color:#999; padding:20px;">正在加载云端数据...</div>';
+
+            try {
+                // 查询所有学生，提取班级名
+                const { data, error } = await client
+                    .from('students')
+                    .select('class_name')
+                    .limit(1000); // 限制数量防止卡顿
+
+                if (error) throw error;
+
+                // 去重：['701', '701', '702'] -> ['701', '702']
+                const classIds = [...new Set(data.map(item => item.class_name))];
+                
+                list.innerHTML = '';
+                if (classIds.length === 0) {
+                    list.innerHTML = '<div style="color:#999; padding:20px;">暂无班级，请点击右上角创建</div>';
+                    return;
+                }
+
+                classIds.forEach(id => {
+                    const div = document.createElement('div');
+                    div.className = 'class-item';
+                    div.innerHTML = `
+                        <button class="del-btn" onclick="deleteClass('${id}')">×</button>
+                        <div onclick="location.href='class.html?id=${id}'">${id}班</div>
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (err) {
+                console.error('加载失败:', err);
+                list.innerHTML = '<div style="color:red; padding:20px;">加载失败，请检查控制台</div>';
+            }
+        }
+
+        // 4. 新建班级 (写入 Supabase)
+        async function addNewClass() {
+            const name = prompt("请输入班级名称 (例如: 701):");
+            if (!name) return;
+
+            // 检查是否已存在
+            const { data: existing } = await client.from('students').select('class_name').eq('class_name', name).limit(1);
+            if (existing && existing.length > 0) {
+                alert("该班级已存在！");
+                return;
+            }
+
+            await createClassAndSync(name);
+            loadClasses(); // 刷新列表
+        }
+
+        // 5. 初始化班级数据 (批量插入50个学生)
+        async function createClassAndSync(id) {
+            let students = [];
+            for(let i=1; i<=50; i++) {
+                let defaultIdentity = '平民';
+                if (i === 1) defaultIdentity = '组长';
+                if (i === 2) defaultIdentity = '课代表';
+                
+                students.push({
+                    id: `${id}${i.toString().padStart(2,'0')}`,
+                    name: `学生${i}`,
+                    class_name: id,
+                    score: 0,
+                    identity: defaultIdentity,
+                    group: `第${Math.ceil(i/10)}组`
+                });
+            }
+            
+            const { error } = await client.from('students').insert(students);
+            if (error) alert('创建失败: ' + error.message);
+        }
+
+        // 6. 删除班级
+        async function deleteClass(id) {
+            if(confirm(`确定要删除 ${id}班 吗？`)) {
+                await client.from('students').delete().eq('class_name', id);
+                loadClasses();
+            }
+        }
+
+        // 7. 渲染本地配置 (身份/项目)
+        function renderConfig() {
+            // 渲染身份
+            const identityList = document.getElementById('identity-list');
+            identityList.innerHTML = '';
+            if(db.identities) {
+                db.identities.forEach((identity, index) => {
+                    const tag = document.createElement('div');
+                    tag.className = 'tag tag-identity';
+                    tag.style.backgroundColor = identity.color;
+                    tag.innerHTML = ` ${identity.name} <button onclick="deleteIdentity(${index})">×</button> `;
+                    identityList.appendChild(tag);
+                });
+            }
+
+            // 渲染项目
+            const itemList = document.getElementById('item-list');
+            itemList.innerHTML = '';
+            if(db.items) {
+                db.items.forEach((item, index) => {
+                    const tag = document.createElement('div');
+                    tag.className = `tag ${item.score >= 0 ? 'tag-plus' : 'tag-minus'}`;
+                    tag.innerHTML = ` ${item.name} (${item.score>0?'+':''}${item.score}) <button onclick="deleteItem(${index})">×</button> `;
+                    itemList.appendChild(tag);
+                });
+            }
+        }
+
+        // 8. 配置操作函数
+        window.addIdentity = function() {
+            const name = document.getElementById('identity-name').value;
+            const color = document.getElementById('identity-color').value;
+            if(name) {
+                if(!db.identities) db.identities = [];
+                db.identities.push({name, color});
+                saveData();
+                renderConfig();
+                document.getElementById('identity-name').value = '';
+            }
+        }
+        window.deleteIdentity = function(index) {
+            if(confirm("删除该身份？")) {
+                db.identities.splice(index, 1);
+                saveData();
+                renderConfig();
+            }
+        }
+        window.addItem = function() {
+            const name = document.getElementById('item-name').value;
+            const score = parseInt(document.getElementById('item-score').value);
+            if(name && !isNaN(score)) {
+                if(!db.items) db.items = [];
+                db.items.push({name, score});
+                saveData();
+                renderConfig();
+                document.getElementById('item-name').value = '';
+                document.getElementById('item-score').value = '';
+            }
+        }
+        window.deleteItem = function(index) {
+            db.items.splice(index, 1);
+            saveData();
+            renderConfig();
+        }
+
+        function saveData() {
+            localStorage.setItem('scoreSystemDB', JSON.stringify(db));
+        }
+    </script>
+</body>
+</html>
