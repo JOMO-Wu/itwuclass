@@ -16,102 +16,274 @@
             --success: #2ecc71;
             --danger: #ff7675;
         }
-
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; }
-
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+        }
         /* 导航栏 */
-        .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1); position: sticky; top: 0; z-index: 100; }
-        .navbar h1 { margin: 0; color: var(--primary); font-size: 1.5rem; }
-        .nav-btn { padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; border: 2px solid var(--primary); transition: 0.3s; }
-        .btn-back { background: var(--bg); color: var(--primary); }
-        .btn-back:hover { background: var(--primary); color: white; }
-        .btn-seats { background: var(--primary); color: white; border: 2px solid var(--primary); text-decoration: none; margin-left: 10px;}
-        .btn-seats:hover { background: #732d91; }
-
+        .navbar {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .navbar h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+        .nav-btn {
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            border: 2px solid var(--primary);
+            transition: 0.3s;
+        }
+        .btn-back {
+            background: var(--bg);
+            color: var(--primary);
+        }
+        .btn-back:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-seats {
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--primary);
+            text-decoration: none;
+            margin-left: 10px;
+        }
+        .btn-seats:hover {
+            background: #732d91;
+        }
         /* 主容器 */
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(142, 68, 173, 0.1); }
-        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(142, 68, 173, 0.1);
+        }
         /* 表格样式 */
-        table { width: 100%; border-collapse: collapse; }
-        th { background: rgba(142, 68, 173, 0.05); color: var(--primary); padding: 15px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--primary); }
-        td { padding: 15px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-        tr:hover { background: rgba(255, 255, 255, 0.8); }
-        .stu-link { color: var(--text); text-decoration: none; font-weight: bold; }
-        .stu-link:hover { color: var(--pink); }
-        .badge { padding: 5px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: white; }
-        .badge-leader { background: #0984e3; }
-        .badge-vip { background: #fdcb6e; color: #333; }
-        .badge-normal { background: #b2bec3; color: #333; }
-
-        /* 行内操作 */
-        .action-cell { display: flex; gap: 8px; align-items: center; }
-        .mini-select { padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.85rem; outline: none; }
-        .select-add { color: var(--success); font-weight: bold; }
-        .select-sub { color: var(--danger); font-weight: bold; }
-        .mini-btn { padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; color: white; }
-        .btn-submit { background: var(--primary); }
-        .btn-submit:hover { background: #732d91; }
-        .score-preview { font-size: 0.9rem; font-weight: bold; min-width: 40px; text-align: center; }
-
-        #loading { text-align: center; padding: 50px; color: #999; }
-        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: rgba(142, 68, 173, 0.05);
+            color: var(--primary);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary);
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        tr:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+        .stu-link {
+            color: var(--text);
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .stu-link:hover {
+            color: var(--pink);
+        }
+        /* 动态身份 Badge 样式 */
+        .badge {
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+        }
+        /* 操作按钮 */
+        .action-cell {
+            display: flex;
+            gap: 8px;
+        }
+        .mini-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: white;
+        }
+        .btn-score {
+            background: var(--primary);
+        }
+        .btn-edit {
+            background: #95a5a6;
+        }
+        #loading {
+            text-align: center;
+            padding: 50px;
+            color: #999;
+        }
         /* 弹窗样式 */
-        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); backdrop-filter: blur(3px); }
-        .modal-content { background-color: #fff; margin: 10% auto; padding: 30px; border-radius: 20px; width: 90%; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); animation: popIn 0.3s; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
-        .modal-title { font-size: 1.2rem; color: var(--primary); margin: 0; }
-        .close { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
-        .close:hover { color: var(--danger); }
-        .form-group { margin-bottom: 15px; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .submit-btn { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            animation: popIn 0.3s;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .modal-title {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin: 0;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: var(--danger);
+        }
+        /* 表单布局 */
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        /* --- 修改点：自定义输入区域样式优化 --- */
+        .custom-input-group {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+        .custom-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--primary);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        /* 确保容器是 Flex 布局 */
+        .custom-input-group .input-row {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+        /* 强制文字输入框宽度为 75% */
+        .custom-input-group input[type="text"] {
+            flex: 0 0 75%; 
+            max-width: 75%;
+            padding: 12px;
+            font-size: 1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        /* 强制数字输入框宽度为 25% */
+        .custom-input-group input[type="number"] {
+            flex: 0 0 25%;
+            max-width: 25%;
+            padding: 12px;
+            font-size: 1.1rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            box-sizing: border-box;
+        }
+        .custom-input-group input:focus {
+            border-color: var(--primary);
+            outline: none;
+            background-color: #faf5ff;
+        }
     </style>
 </head>
 <body>
-
-    <!-- 导航栏 -->
     <div class="navbar">
         <div style="display: flex; align-items: center;">
-            <button class="nav-btn btn-back" onclick="location.href='teacher.html'">← 返回</button>
+            <button class="nav-btn btn-back" id="back-btn">← 返回</button>
             <h1 style="margin-left: 20px;" id="class-title">班级管理</h1>
         </div>
-        <!-- 新增：跳转到座位表的按钮 -->
-        <a href="seats.html" id="btn-seats" class="nav-btn btn-seats">🪑 座位管理</a>
-
-<script>
-    // 在页面加载时，给按钮链接加上 ID
-    window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const classId = urlParams.get('id');
-        if (classId) {
-            document.getElementById('btn-seats').href = `seats.html?id=${classId}`;
-        }
-    });
-</script>
-        
+        <a href="#" id="btn-seats" class="nav-btn btn-seats">🪑 座位管理</a>
     </div>
-
-    <!-- 主内容 -->
     <div class="container">
         <div class="card">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid var(--bg); padding-bottom: 15px;">
                 <h2>👥 学生列表</h2>
                 <span style="color: #999;">☁️ 云端同步中</span>
             </div>
-
             <div id="loading">正在加载数据...</div>
-
             <table id="data-table" style="display: none;">
                 <thead>
                     <tr>
-                        <th>学号</th>
+                        <th>座位号</th>
                         <th>姓名</th>
                         <th>身份</th>
                         <th>小组</th>
                         <th>当前积分</th>
-                        <th>快速操作</th>
+                        <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="student-list"></tbody>
@@ -119,7 +291,7 @@
         </div>
     </div>
 
-    <!-- 弹窗：修改信息 -->
+    <!-- 修改信息弹窗 -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -139,113 +311,328 @@
                 <label>小组</label>
                 <input type="text" id="edit-group" class="form-control">
             </div>
+            <div class="form-group">
+                <label>座位号</label>
+                <input type="number" id="edit-seat-no" class="form-control" placeholder="输入座位号">
+            </div>
             <button class="submit-btn" onclick="submitEdit()">保存修改</button>
         </div>
     </div>
 
+    <!-- 积分弹窗 -->
+    <div id="scoreModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">💰 为 <span id="score-stu-name"></span> 添加积分</h3>
+                <span class="close" onclick="closeModal('scoreModal')">&times;</span>
+            </div>
+            <input type="hidden" id="score-stu-id">
+            
+            <!-- 预设项目选择 -->
+            <div class="form-row">
+                <select id="select-add" class="form-control" onchange="handleSelectChange('add')">
+                    <option value="0">✅ 选择加分项目</option>
+                </select>
+                <select id="select-sub" class="form-control" onchange="handleSelectChange('sub')">
+                    <option value="0">❌ 选择扣分项目</option>
+                </select>
+            </div>
+
+            <!-- 自定义输入区域 -->
+            <div class="custom-input-group">
+                <label>📝 其他项目 (手动输入):</label>
+                <div class="input-row">
+                    <input type="text" id="custom-reason" placeholder="请输入项目名称，例如：帮助同学">
+                    <input type="number" id="custom-score" placeholder="分数">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px;">
+                <label>当前预览变动：</label>
+                <span id="preview-score" style="font-weight:bold; font-size: 1.2rem; margin-left: 10px;">0</span>
+            </div>
+            <button class="submit-btn" onclick="submitScore()">确认提交积分</button>
+        </div>
+    </div>
+
     <script>
-        // ⚙️ 1. 配置
+// --- 🛡️ 修复后的安全守卫代码：放置在文件最顶部 ---
+const urlParams = new URLSearchParams(window.location.search);
+const requestedClassId = urlParams.get('id');
+// 1. 统一获取本地存储
+const auth = JSON.parse(localStorage.getItem('scoreSystemAuth')); 
+
+// 2. 检查逻辑分发
+// 情况 A: 如果是课代表模式
+if (urlParams.get('role') === 'representative') {
+    if (!auth || !auth.authenticated || auth.role !== 'representative' || !auth.classId || auth.classId !== requestedClassId) {
+        alert('❌ 课代表身份验证失败或已过期！');
+        localStorage.removeItem('scoreSystemAuth');
+        window.location.href = 'login.html';
+        throw new Error("未授权访问");
+    }
+} 
+// 情况 B: 如果是普通学生
+else if (urlParams.get('role') === 'student') {
+    if (!auth || auth.role !== 'student') {
+        alert('⚠️ 学生登录失效，请先登录！');
+        localStorage.removeItem('scoreSystemAuth');
+        window.location.href = 'login.html';
+        throw new Error("未授权访问");
+    }
+    if (auth.classId && auth.classId !== requestedClassId) {
+        alert('🚫 你无权访问该班级！');
+        window.location.href = `class.html?id=${auth.classId}&role=student`;
+        throw new Error("越权访问");
+    }
+}
+// ✅ 情况 C: 如果是教师跳转 (核心修复：不再只看 URL，而是看 localStorage)
+else {
+    // 1. 检查是否真的有教师身份
+    if (!auth || auth.role !== 'teacher' || !auth.authenticated) {
+        alert('⚠️ 教师权限验证失败，请重新登录 teacher.html！');
+        localStorage.removeItem('scoreSystemAuth');
+        window.location.href = 'login.html'; // 或者跳转到 teacher.html
+        throw new Error("未授权访问");
+    }
+    // 2. 检查来源是否正确 (防止直接伪造 URL)
+    const source = urlParams.get('source');
+    if (source !== 'teacher') {
+        alert('⚠️ 非法访问来源！');
+        throw new Error("非法来源");
+    }
+    // ✅ 验证通过：说明 localStorage 里有教师令牌，且 URL 是从 teacher 来的
+    // 代码继续执行，进入班级页面
+}
+// --- 🛡️ 守卫代码结束 ---
+        // ⚙️ 配置
         const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        let studentsData = []; 
+        
+        let studentsData = [];
         let currentClassId = '';
-
-        // 🚀 2. 初始化
+        let currentRole = 'teacher';
+        let db = {};
+// --- 新增代码：将 DB 配置暴露给 board.html 使用 ---
+// 这样 board 页面才能读取到相同的身份颜色配置
+window.scoreSystemDB = db;
+        // 初始化
         window.addEventListener('DOMContentLoaded', () => {
+            const storedDB = localStorage.getItem('scoreSystemDB');
+            if (storedDB) db = JSON.parse(storedDB);
+
             const urlParams = new URLSearchParams(window.location.search);
             currentClassId = urlParams.get('id');
+            
+            const urlRole = urlParams.get('role');
+            if (urlRole === 'representative') {
+                currentRole = 'representative';
+            }
+
             if (currentClassId) {
-                document.getElementById('class-title').innerText = `${currentClassId}班 - 管理`;
+                const titlePrefix = currentRole === 'representative' ? '[课代表] ' : '';
+                document.getElementById('class-title').innerText = `${titlePrefix}${currentClassId}班 - 管理`;
                 loadClassData(currentClassId);
             }
+
+            const backBtn = document.getElementById('back-btn');
+            const source = urlParams.get('source');
+            backBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (source === 'teacher') {
+                    window.location.href = 'teacher.html';
+                } else {
+                    if (window.history.length > 1) {
+                        window.history.back();
+                    } else {
+                        window.location.href = 'teacher.html';
+                    }
+                }
+            });
+
+
         });
 
-        // 3. 加载数据
+        // 加载数据
         async function loadClassData(classId) {
-            const { data, error } = await client.from('students').select('*').eq('class_name', classId).order('id');
-            if (error) { console.error(error); return; }
-            
-            studentsData = data || [];
+            const { data, error } = await client
+                .from('students')
+                .select('id, name, identity, group, score, seat')
+                .eq('class_name', classId);
+            if (error) {
+                console.error(error);
+                return;
+            }
+            studentsData = (data || []).sort((a, b) => {
+                const seatA = a.seat;
+                const seatB = b.seat;
+                if (!seatA && seatB) return 1;
+                if (seatA && !seatB) return -1;
+                if (seatA && seatB) return seatA - seatB;
+                return 0;
+            });
             document.getElementById('loading').style.display = 'none';
             document.getElementById('data-table').style.display = 'table';
             renderTable();
         }
 
-        // 4. 渲染表格
+        // 渲染表格
         function renderTable() {
             const listEl = document.getElementById('student-list');
             listEl.innerHTML = '';
-            
             studentsData.forEach(stu => {
-                const stuId = String(stu.id); 
-                let badgeClass = 'badge-normal';
-                if (stu.identity === '组长') badgeClass = 'badge-leader';
-                if (stu.identity === 'VIP') badgeClass = 'badge-vip';
-
+                const stuId = String(stu.id);
+                const identityConfig = db.identities?.find(i => i.name === stu.identity) || { name: '平民', color: '#b2bec3' };
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${stuId}</td>
+                    <td>${stu.seat || '-'}</td>
                     <td><a href="student.html?id=${stuId}" class="stu-link">${stu.name}</a></td>
-                    <td><span class="badge ${badgeClass}">${stu.identity || '平民'}</span></td>
+                    <td>
+                        <span class="badge" style="background-color: ${identityConfig.color};">
+                            ${stu.identity || '平民'}
+                        </span>
+                    </td>
                     <td>${stu.group || '-'}</td>
                     <td style="font-weight:bold; color:var(--primary); font-size:1.2rem;">${stu.score}</td>
                     <td>
                         <div class="action-cell">
-                            <select class="mini-select select-add" onchange="updatePreview(this, '${stuId}')">
-                                <option value="0">加分项</option>
-                            </select>
-                            <select class="mini-select select-sub" onchange="updatePreview(this, '${stuId}')">
-                                <option value="0">扣分项</option>
-                            </select>
-                            <span id="preview-${stuId}" class="score-preview">0</span>
-                            <button class="mini-btn btn-submit" onclick="quickSubmit('${stuId}')">提交</button>
+                            <button class="mini-btn btn-score" onclick="openScoreModal('${stuId}')">💰 积分</button>
+                            <button class="mini-btn btn-edit" onclick="openEditModal('${stuId}')">✏️ 修改</button>
                         </div>
                     </td>
                 `;
                 listEl.appendChild(row);
             });
-            fillSelectOptions();
         }
 
-        function fillSelectOptions() {
-            const db = JSON.parse(localStorage.getItem('scoreSystemDB'));
-            if (!db || !db.items) return;
-            const addSelects = document.querySelectorAll('.select-add');
-            const subSelects = document.querySelectorAll('.select-sub');
+        // --- 弹窗与逻辑 ---
+        window.openScoreModal = function(id) {
+            const stu = studentsData.find(s => String(s.id) === String(id));
+            if (!stu) return;
+            document.getElementById('score-stu-id').value = id;
+            document.getElementById('score-stu-name').innerText = stu.name;
+            
+            // 重置表单
+            document.getElementById('select-add').value = "0";
+            document.getElementById('select-sub').value = "0";
+            document.getElementById('custom-reason').value = "";
+            document.getElementById('custom-score').value = "";
+            
+            fillScoreSelectOptions();
+            updateScorePreview();
+            document.getElementById('scoreModal').style.display = 'block';
+        }
+
+        function fillScoreSelectOptions() {
+            const addSelect = document.getElementById('select-add');
+            const subSelect = document.getElementById('select-sub');
+            addSelect.innerHTML = '<option value="0">✅ 选择加分项目</option>';
+            subSelect.innerHTML = '<option value="0">❌ 选择扣分项目</option>';
+            if (!db.items) return;
             db.items.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.score;
                 option.text = `${item.name} (${item.score > 0 ? '+' : ''}${item.score})`;
-                if (item.score >= 0) addSelects.forEach(sel => sel.add(option.cloneNode(true)));
-                else subSelects.forEach(sel => sel.add(option.cloneNode(true)));
+                (item.score > 0 ? addSelect : subSelect).appendChild(option);
             });
         }
 
-        window.updatePreview = function(selectEl, stuId) {
-            const row = selectEl.closest('tr');
-            const val = parseInt(row.querySelector('.select-add').value) + parseInt(row.querySelector('.select-sub').value);
-            const el = document.getElementById(`preview-${stuId}`);
-            el.innerText = (val > 0 ? '+' : '') + val;
-            el.style.color = val >= 0 ? 'var(--success)' : 'var(--danger)';
+        // 新增：处理互斥选择逻辑
+        window.handleSelectChange = function(type) {
+            const addSelect = document.getElementById('select-add');
+            const subSelect = document.getElementById('select-sub');
+            
+            // 如果改变了加分，则扣分重置
+            if (type === 'add' && addSelect.value != "0") {
+                subSelect.value = "0";
+            }
+            // 如果改变了扣分，则加分重置
+            if (type === 'sub' && subSelect.value != "0") {
+                addSelect.value = "0";
+            }
+            updateScorePreview();
         }
 
-        window.quickSubmit = async function(stuId) {
-            const row = document.getElementById(`preview-${stuId}`).closest('tr');
-            const change = parseInt(row.querySelector('.select-add').value) + parseInt(row.querySelector('.select-sub').value);
-            if (change === 0) return alert('请选择项目');
+        // 监听自定义输入框的变化
+        document.getElementById('custom-reason')?.addEventListener('input', updateScorePreview);
+        document.getElementById('custom-score')?.addEventListener('input', updateScorePreview);
 
-            const stu = studentsData.find(s => String(s.id) === String(stuId));
+        function updateScorePreview() {
+            // 获取下拉框的值
+            const addVal = parseInt(document.getElementById('select-add').value) || 0;
+            const subVal = parseInt(document.getElementById('select-sub').value) || 0;
+            
+            // 获取自定义输入框的值
+            const customVal = parseInt(document.getElementById('custom-score').value) || 0;
+
+            // 优先使用自定义输入，如果没有输入则使用下拉框
+            let finalChange = customVal;
+            if (customVal === 0) {
+                finalChange = addVal + subVal;
+            }
+
+            const previewEl = document.getElementById('preview-score');
+            previewEl.innerText = (finalChange >= 0 ? '+' : '') + finalChange;
+            previewEl.style.color = finalChange > 0 ? 'var(--success)' : (finalChange < 0 ? 'var(--danger)' : 'inherit');
+        }
+
+        // --- 核心修改：提交积分逻辑 ---
+        window.submitScore = async function() {
+            const id = document.getElementById('score-stu-id').value;
+            
+            // 1. 获取自定义输入
+            const customReason = document.getElementById('custom-reason').value.trim();
+            const customScore = parseInt(document.getElementById('custom-score').value) || 0;
+
+            // 2. 获取下拉框选择
+            const addScore = parseInt(document.getElementById('select-add').value) || 0;
+            const subScore = parseInt(document.getElementById('select-sub').value) || 0;
+
+            let change = 0;
+            let reason = '';
+
+            // 3. 逻辑判断：优先使用自定义，否则使用预设
+            if (customReason && customScore !== 0) {
+                change = customScore;
+                reason = customReason;
+        // ... (接上一段代码的 submitScore 函数) ...
+            } else {
+                change = addScore + subScore;
+                if (change === 0) {
+                    alert('请选择项目或输入自定义分数！');
+                    return;
+                }
+                // 使用预设项目的名称作为理由
+                if (change > 0) {
+                    reason = document.getElementById('select-add').selectedOptions[0].text;
+                } else {
+                    reason = document.getElementById('select-sub').selectedOptions[0].text;
+                }
+            }
+
+            const stu = studentsData.find(s => String(s.id) === String(id));
+            if (!stu) return;
+
+            // 更新总分
             stu.score += change;
             
-            await client.from('students').update({ score: stu.score }).eq('id', stuId);
+            // 1. 更新学生总分
+            await client.from('students').update({ score: stu.score }).eq('id', id);
+
+            // 2. 写入历史记录
+            const operatorName = currentRole === 'representative' ? '课代表' : '教师';
+
             await client.from('score_history').insert({
-                student_id: stuId, operator: '班主任', score_change: change,
-                reason: change > 0 ? row.querySelector('.select-add').options[row.querySelector('.select-add').selectedIndex].text : row.querySelector('.select-sub').options[row.querySelector('.select-sub').selectedIndex].text,
+                student_id: id,
+                operator: operatorName, 
+                score_change: change,
+                reason: reason, // 使用上面逻辑判断出的 reason
                 class_name: currentClassId
             });
-            
+
+            alert(`操作成功！变动分数：${change > 0 ? '+' : ''}${change}`);
+            closeModal('scoreModal');
             renderTable();
         }
 
@@ -256,18 +643,20 @@
             document.getElementById('edit-id').value = stu.id;
             document.getElementById('edit-name').value = stu.name;
             document.getElementById('edit-group').value = stu.group || '';
+            
+            // 填充身份选项
             const identitySelect = document.getElementById('edit-identity');
             identitySelect.innerHTML = '';
-            const db = JSON.parse(localStorage.getItem('scoreSystemDB'));
-            if (db && db.identities) {
-                db.identities.forEach(ident => {
-                    const option = document.createElement('option');
-                    option.value = ident.name;
-                    option.text = ident.name;
-                    identitySelect.add(option);
-                });
-            }
+            (db.identities || []).forEach(ident => {
+                const option = document.createElement('option');
+                option.value = ident.name;
+                option.text = ident.name;
+                identitySelect.add(option);
+            });
             identitySelect.value = stu.identity;
+
+            // 填充座位号
+            document.getElementById('edit-seat-no').value = stu.seat || '';
             document.getElementById('editModal').style.display = 'block';
         }
 
@@ -276,19 +665,28 @@
             const newName = document.getElementById('edit-name').value;
             const newIdentity = document.getElementById('edit-identity').value;
             const newGroup = document.getElementById('edit-group').value;
+            const newSeatNo = document.getElementById('edit-seat-no').value;
 
             await client.from('students').update({
-                name: newName, identity: newIdentity, group: newGroup
+                name: newName,
+                identity: newIdentity,
+                group: newGroup,
+                seat: newSeatNo
             }).eq('id', id);
 
+            // 更新本地数据
             const stu = studentsData.find(s => String(s.id) === String(id));
-            stu.name = newName; stu.identity = newIdentity; stu.group = newGroup;
-            
+            stu.name = newName;
+            stu.identity = newIdentity;
+            stu.group = newGroup;
+            stu.seat = newSeatNo;
             renderTable();
             closeModal('editModal');
         }
 
-        window.closeModal = function(id) { document.getElementById(id).style.display = 'none'; }
+        window.closeModal = function(id) {
+            document.getElementById(id).style.display = 'none';
+        }
     </script>
 </body>
 </html>

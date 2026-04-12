@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - 多巴胺积分系统</title>
+    
+    <!-- 引入 Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Segoe UI', sans-serif; 
+            background: linear-gradient(135deg, #8e44ad, #ff6b9d); 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow: hidden; 
+        }
+
+        /* 星空背景画布 */
+        #star-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1; 
+        }
+
+        .login-card { 
+            position: relative;
+            z-index: 10; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(5px); 
+            padding: 40px; 
+            border-radius: 25px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); 
+            text-align: center; 
+            width: 350px; 
+            animation: popIn 0.4s ease; 
+        }
+        
+        .login-card h2 { 
+            color: #8e44ad; 
+            margin-bottom: 20px; 
+        }
+        
+        .role-select { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        
+        .role-btn { 
+            flex: 1; 
+            padding: 10px; 
+            border: 2px solid #eee; 
+            border-radius: 10px; 
+            background: white; 
+            cursor: pointer; 
+            font-weight: bold; 
+            color: #666; 
+        }
+        
+        .role-btn.active { 
+            border-color: #8e44ad; 
+            background: #fdf2f8; 
+            color: #8e44ad; 
+        }
+        
+        .input-group { 
+            margin-bottom: 15px; 
+            text-align: left; 
+        }
+        
+        .input-group label { 
+            display: block; 
+            color: #666; 
+            margin-bottom: 5px; 
+            font-size: 14px; 
+        }
+        
+        .input-group input { 
+            width: 90%; 
+            padding: 12px; 
+            border: 2px solid #eee; 
+            border-radius: 10px; 
+            font-size: 16px; 
+            outline: none; 
+        }
+        
+        .input-group input:focus { 
+            border-color: #ff6b9d; 
+        }
+        
+        .login-btn { 
+            width: 100%; 
+            padding: 15px; 
+            border: none; 
+            border-radius: 15px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            transition: 0.2s; 
+            background: #8e44ad; 
+            color: white; 
+        }
+        
+        .login-btn:hover { 
+            transform: scale(1.02); 
+            background: #732d91; 
+        }
+        
+        @keyframes popIn { 
+            from { transform: scale(0.8); opacity: 0; } 
+            to { transform: scale(1); opacity: 1; } 
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景层 -->
+    <canvas id="star-canvas"></canvas>
+
+    <div class="login-card">
+        <h2>🏫 欢迎登录</h2>
+        <div class="role-select">
+            <div class="role-btn active" onclick="setRole('teacher')">我是教师</div>
+            <div class="role-btn" onclick="setRole('student')">我是学生</div>
+        </div>
+        <div class="input-group">
+            <label>账号</label>
+            <input type="text" id="username" placeholder="请输入账号">
+        </div>
+        <div class="input-group">
+            <label>密码</label>
+            <input type="password" id="password">
+        </div>
+        <button class="login-btn" onclick="handleLogin()">登 录</button>
+    </div>
+
+    <script>
+        // --- 🌟 升级版星空背景特效代码 ---
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        let width, height;
+        let stars = [];
+
+        // 初始化画布大小
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        // 星星类
+        class Star {
+            constructor() {
+                this.init();
+            }
+
+            init() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                
+                // --- 修改点：整体调大尺寸 ---
+                this.size = Math.random() * 2 + 1; // 普通星星：1px - 3px (之前是 0.5-2)
+                
+                // 随机类型：0=普通点, 1=四芒星, 2=大星星
+                const rand = Math.random();
+                if (rand > 0.90) { 
+                    // 10% 概率是大星星 (之前是 5%)
+                    this.type = 2; 
+                    this.size = Math.random() * 3 + 4; // 大星星尺寸：4px - 7px (之前是 2.5-4.5)
+                } else if (rand > 0.6) {
+                    // 30% 概率是四芒星 (之前是 25%)
+                    this.type = 1; 
+                    this.size = Math.random() * 2 + 2; // 四芒星尺寸：2px - 4px (之前是 1-2.5)
+                } else {
+                    this.type = 0; // 60% 概率是普通点
+                }
+
+                this.speedX = (Math.random() - 0.5) * 0.3; 
+                this.speedY = (Math.random() - 0.5) * 0.3; 
+                this.alpha = Math.random(); 
+                this.alphaSpeed = Math.random() * 0.015 + 0.005; 
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                // 边界检查
+                if (this.x < -10 || this.x > width + 10 || this.y < -10 || this.y > height + 10) {
+                    this.init(); // 重新初始化
+                }
+
+                // 呼吸闪烁
+                this.alpha += this.alphaSpeed;
+                if (this.alpha <= 0.2 || this.alpha >= 1) {
+                    this.alphaSpeed = -this.alphaSpeed;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = 'white';
+                ctx.translate(this.x, this.y);
+
+                if (this.type === 1) {
+                    // --- 绘制四芒星 ---
+                    // 使用阴影制造发光效果
+                    ctx.shadowBlur = 6; // 增加四芒星的光晕
+                    ctx.shadowColor = "white";
+                    
+                    ctx.beginPath();
+                    // 绘制十字星芒形状
+                    ctx.moveTo(0, -this.size * 3);
+                    ctx.lineTo(0, this.size * 3);
+                    ctx.moveTo(-this.size * 3, 0);
+                    ctx.lineTo(this.size * 3, 0);
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = this.size / 2;
+                    ctx.stroke();
+                    
+                    // 中间加个核心点
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2);
+                    ctx.fill();
+
+                } else {
+                    // --- 绘制普通星星或大星星 (圆形) ---
+                    // 大星星的光晕更强
+                    ctx.shadowBlur = this.type === 2 ? 15 : 8; 
+                    ctx.shadowColor = "white";
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // 创建星星
+        function initStars() {
+            stars = [];
+            const starCount = 120; 
+            for (let i = 0; i < starCount; i++) {
+                stars.push(new Star());
+            }
+        }
+
+        // 动画循环
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => {
+                star.update();
+                star.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+
+        // 启动背景
+        window.addEventListener('resize', resize);
+        resize();
+        initStars();
+        animate();
+        // --- 🌟 特效代码结束 ---
+
+        // --- 业务逻辑 ---
+        let currentRole = 'teacher';
+        
+        function setRole(role) {
+            currentRole = role;
+            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('username').value = '';
+        }
+
+        async function handleLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            
+            if (currentRole === 'teacher') {
+                if (u === 'wxp' && p === 'jomi') {
+                    localStorage.setItem('scoreSystemAuth', JSON.stringify({ role: 'teacher', authenticated: true }));
+                    window.location.href = 'teacher.html';
+                } else {
+                    alert('教师账号或密码错误！');
+                }
+            } else {
+                // 学生登录逻辑
+                if (!u) return alert('请输入学号！');
+
+                // 检查是否是班级特殊账号 (格式：701xxk)
+                if (u.endsWith('xxk')) {
+                    if (p === 'jhsy') {
+                        const classId = u.slice(0, -3);
+                        
+                        try {
+                            const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
+                            const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
+                            const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+                            const { data, error, count } = await supabase
+                                .from('students')
+                                .select('*', { count: 'exact', head: true })
+                                .eq('class_name', classId)
+                                .limit(1);
+
+                            if (error || count === 0) {
+                                alert(`错误：未找到 ${classId} 班的数据，请联系管理员`);
+                                return;
+                            }
+                        // ✅ 修复点：将代码中的 targetClassId 改为 classId
+                        localStorage.setItem('scoreSystemAuth', JSON.stringify({
+                            role: 'student',
+                            authenticated: true,
+                            classId: classId
+                        }));
+                        // ✅ 修复点：将代码中的 targetClassId 改为 classId
+                        window.location.href = `class.html?id=${classId}&role=student&user=${u}`;
+                            
+                        } catch (err) {
+                            console.error('登录出错:', err);
+                            alert('系统维护中，请稍后再试');
+                        }
+                        
+                    } else {
+                        alert('班级账号密码错误！');
+                    }
+                    return;
+                }
+
+                // 普通学生逻辑
+                const db = JSON.parse(localStorage.getItem('scoreSystemDB'));
+                let targetClassId = '';
+                let studentExists = false;
+                if(db && db.classes) {
+                    for(let cls of db.classes) {
+                        if(cls.students.find(s => s.id === u)) {
+                            targetClassId = cls.id;
+                            studentExists = true;
+                            break;
+                        }
+                    }
+                }
+                if (studentExists && p === 'jhsy') {
+                    window.location.href = `class.html?id=${targetClassId}&role=student&user=${u}`;
+                } else {
+                    alert('学号不存在或密码错误！');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

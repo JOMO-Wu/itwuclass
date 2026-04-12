@@ -3,91 +3,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>登录 - 多巴胺积分系统</title>
+    <title>🌈吴老师的信息课(●´ω｀●)ゞ</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #8e44ad, #ff6b9d); height: 100vh; display: flex; justify-content: center; align-items: center; }
-        .login-card { background: white; padding: 40px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); text-align: center; width: 350px; animation: popIn 0.4s ease; }
-        .login-card h2 { color: #8e44ad; margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; text-align: left; }
-        .input-group label { display: block; color: #666; margin-bottom: 5px; font-size: 14px; }
-        .input-group input { width: 90%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 16px; outline: none; }
-        .input-group input:focus { border-color: #ff6b9d; }
-        .role-select { display: flex; gap: 10px; margin-bottom: 20px; }
-        .role-btn { flex: 1; padding: 10px; border: 2px solid #eee; border-radius: 10px; background: white; cursor: pointer; font-weight: bold; color: #666; }
-        .role-btn.active { border-color: #8e44ad; background: #fdf2f8; color: #8e44ad; }
-        .login-btn { width: 100%; padding: 15px; border: none; border-radius: 15px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; background: #8e44ad; color: white; }
-        .login-btn:hover { transform: scale(1.02); background: #732d91; }
-        @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        :root {
+            --primary: #8e44ad;
+            --pink: #ff6b9d;
+            --text: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #8e44ad, #ff6b9d);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 导航栏 (保持原有样式) --- */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(5px);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.2);
+            position: relative;
+            z-index: 100;
+        }
+        .navbar h1 { 
+            margin: 0; 
+            color: var(--primary); 
+            font-size: 1.5rem; 
+        }
+        .login-btn { 
+            background: var(--primary); 
+            color: white; 
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 25px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            transition: 0.3s; 
+            text-decoration: none; 
+            display: inline-block; 
+        }
+        .login-btn:hover { 
+            background: #732d91; 
+            transform: scale(1.05); 
+        }
+
+        /* --- 中间区域：星空与星球 --- */
+        .main-space {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #star-canvas { 
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            z-index: 0; 
+        }
+        #galaxy { 
+            position: relative; 
+            z-index: 10; 
+            width: 100%; 
+            height: 100%; 
+            padding: 80px; 
+            box-sizing: border-box; 
+        }
+
+        /* --- 星球样式 --- */
+        /* 移除了 .planet:hover 的 transform，改由 JS 控制悬停，防止动画冲突 */
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+            /* 默认大小，会被 JS 覆盖 */
+            width: 80px;
+            height: 80px;
+            font-size: 1rem;
+            /* 保持浮动动画 */
+            animation: float 6s ease-in-out infinite;
+            /* 关键：开启硬件加速，优化性能 */
+            transform: translateZ(0);
+        }
+
+        /* 悬停效果：仅改变层级和光影，不改变位置 */
+        .planet:hover {
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(255,255,255,0.8);
+            text-shadow: 0 0 10px white;
+        }
+
+        /* 配色 */
+        .type-1 { background: radial-gradient(circle at 30% 30%, #cbe6ff, #78a6fc); }
+        .type-2 { background: radial-gradient(circle at 30% 30%, #ee97ac, #ec5a8b); }
+        .type-3 { background: radial-gradient(circle at 30% 30%, #ebcef7, #b162cc); }
+        .type-4 { background: radial-gradient(circle at 30% 30%, #ffe9f2, #ffa3d0); }
+
+        /* 浮动动画 */
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateZ(0); }
+            50% { transform: translateY(-20px) translateZ(0); }
+        }
+
+        /* --- 页脚 (保持原有样式) --- */
+        .footer { 
+            width: 100%; 
+            text-align: center; 
+            padding: 20px 0; 
+            background: rgba(255, 255, 255, 0.3); 
+            backdrop-filter: blur(2px); 
+            color: rgba(255, 255, 255, 0.8); 
+            font-size: 0.9rem; 
+            position: relative; 
+            z-index: 100; 
+        }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <h2>🏫 欢迎登录</h2>
-        
-        <div class="role-select">
-            <div class="role-btn active" onclick="setRole('teacher')">我是教师</div>
-            <div class="role-btn" onclick="setRole('student')">我是学生</div>
+    <!-- 导航栏 -->
+    <div class="navbar">
+        <h1>🏫 吉华实验学校初中信息课积分榜 ✧*｡٩(ˊᗜˋ*)و✧*｡</h1>
+        <a href="login.html" class="login-btn">🚀 进入控制台</a>
+    </div>
+    
+    <!-- 中间区域 -->
+    <div class="main-space">
+        <canvas id="star-canvas"></canvas>
+        <div id="galaxy">
+            <!-- 星球将通过 JS 生成 -->
         </div>
-
-        <div class="input-group">
-            <label>账号 (教师admin / 学生填学号)</label>
-            <input type="text" id="username" placeholder="请输入账号">
-        </div>
-        <div class="input-group">
-            <label>密码 (默认123456)</label>
-            <input type="password" id="password" value="123456">
-        </div>
-
-        <button class="login-btn" onclick="handleLogin()">登 录</button>
+    </div>
+    
+    <!-- 页脚 -->
+    <div class="footer">
+        &copy; 2026 吴湘鹏 —— 此网站由吴老师独立设计开发制作，保留所有权利 | 仅供个人教学使用，严禁外传或商用
     </div>
 
     <script>
-        let currentRole = 'teacher';
-
-        function setRole(role) {
-            currentRole = role;
-            document.querySelectorAll('.role-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
-            document.getElementById('username').value = '';
+        // --- 🌟 星空背景特效代码 (保持不变) ---
+        const canvas = document.getElementById('star-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let stars = [];
+        
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
         }
-
-        function handleLogin() {
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-
-            if (currentRole === 'teacher') {
-                if (u === 'admin' && p === '123456') {
-                    window.location.href = 'teacher.html';
+        
+        class Star {
+            constructor() { this.init(); }
+            init() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.size = Math.random() * 2 + 1;
+                const rand = Math.random();
+                if (rand > 0.90) { this.type = 2; this.size = Math.random() * 3 + 4; }
+                else if (rand > 0.6) { this.type = 1; this.size = Math.random() * 2 + 2; }
+                else { this.type = 0; }
+                this.speedX = (Math.random() - 0.5) * 0.3;
+                this.speedY = (Math.random() - 0.5) * 0.3;
+                this.alpha = Math.random();
+                this.alphaSpeed = Math.random() * 0.015 + 0.005;
+            }
+            update() {
+                this.x += this.speedX; this.y += this.speedY;
+                if (this.x < -10 || this.x > width + 10 || this.y < -10 || this.y > height + 10) { this.init(); }
+                this.alpha += this.alphaSpeed;
+                if (this.alpha <= 0.2 || this.alpha >= 1) { this.alphaSpeed = -this.alphaSpeed; }
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = 'white';
+                ctx.translate(this.x, this.y);
+                if (this.type === 1) {
+                    ctx.shadowBlur = 6; ctx.shadowColor = "white";
+                    ctx.beginPath(); ctx.moveTo(0, -this.size * 3); ctx.lineTo(0, this.size * 3);
+                    ctx.moveTo(-this.size * 3, 0); ctx.lineTo(this.size * 3, 0);
+                    ctx.strokeStyle = 'white'; ctx.lineWidth = this.size / 2; ctx.stroke();
+                    ctx.beginPath(); ctx.arc(0, 0, this.size / 2, 0, Math.PI * 2); ctx.fill();
                 } else {
-                    alert('教师账号或密码错误！');
+                    ctx.shadowBlur = this.type === 2 ? 15 : 8; ctx.shadowColor = "white";
+                    ctx.beginPath(); ctx.arc(0, 0, this.size, 0, Math.PI * 2); ctx.fill();
                 }
-            } else {
-                // 学生登录逻辑
-                if (!u) return alert('请输入学号！');
-                
-                // 验证学号是否存在
-                const db = JSON.parse(localStorage.getItem('scoreSystemDB'));
-                let targetClassId = '';
-                let studentExists = false;
+                ctx.restore();
+            }
+        }
+        function initStars() {
+            stars = [];
+            const starCount = 120;
+            for (let i = 0; i < starCount; i++) { stars.push(new Star()); }
+        }
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            stars.forEach(star => { star.update(); star.draw(); });
+            requestAnimationFrame(animate);
+        }
+        window.addEventListener('resize', resize);
+        resize(); initStars(); animate();
 
-                if(db && db.classes) {
-                    for(let cls of db.classes) {
-                        if(cls.students.find(s => s.id === u)) {
-                            targetClassId = cls.id;
-                            studentExists = true;
-                            break;
+        // --- 🚀 业务逻辑：生成均匀不重叠的星球 (修复版) ---
+        const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const galaxyEl = document.getElementById('galaxy');
+            
+            try {
+                const { data, error } = await client
+                    .from('students')
+                    .select('class_name')
+                    .limit(1000);
+                if (error) throw error;
+
+                const classIds = [...new Set(data.map(item => item.class_name))];
+                const containerWidth = galaxyEl.clientWidth;
+                const containerHeight = galaxyEl.clientHeight;
+
+                // ✅ 参数配置
+                const padding = 80; // 内边距
+                const minPlanetSize = 60;
+                const maxPlanetSize = 120;
+                const safetyGap = 20; // 星球之间的最小安全距离
+
+                // ✅ 网格系统：网格大小 = 最大星球直径 + 安全距离
+                const cellSize = maxPlanetSize + safetyGap;
+                const cols = Math.ceil(containerWidth / cellSize);
+                const rows = Math.ceil(containerHeight / cellSize);
+
+                // ✅ 初始化网格状态 (false = 空闲, true = 占用)
+                const grid = Array(rows).fill(null).map(() => Array(cols).fill(false));
+
+                // ✅ 放置星球函数
+                function placePlanet(id, index) {
+                    const maxAttempts = 500; // 最大尝试次数
+                    let placed = false;
+
+                    // 随机决定大小
+                    const isBig = Math.random() > 0.7;
+                    const size = isBig ? (Math.random() * 40 + 100) : (Math.random() * 30 + 60);
+                    const radius = size / 2;
+                    
+                    // 计算该星球占据网格的半径
+                    const occupiedCells = Math.ceil(size / cellSize);
+
+                    for (let attempt = 0; attempt < maxAttempts && !placed; attempt++) {
+                        // 1. 在可用区域内生成随机坐标
+                        const availableWidth = containerWidth - padding * 2;
+                        const availableHeight = containerHeight - padding * 2;
+                        let x = Math.random() * availableWidth + padding;
+                        let y = Math.random() * availableHeight + padding;
+
+                        // 2. 计算所在的网格坐标
+                        const col = Math.floor(x / cellSize);
+                        const row = Math.floor(y / cellSize);
+
+                        // 3. 边界检查 (防止数组越界)
+                        if (col < 0 || col >= cols || row < 0 || row >= rows) {
+                            continue;
                         }
+
+                        // 4. 碰撞检测：检查周围格子
+                        let collision = false;
+                        for (let r = row - occupiedCells; r <= row + occupiedCells; r++) {
+                            if (r < 0 || r >= rows) continue;
+                            for (let c = col - occupiedCells; c <= col + occupiedCells; c++) {
+                                if (c < 0 || c >= cols) continue;
+                                if (grid[r][c]) {
+                                    collision = true;
+                                    break;
+                                }
+                            }
+                            if (collision) break;
+                        }
+
+                        // 5. 如果没有碰撞，放置星球
+                        if (!collision) {
+                            const planet = document.createElement('div');
+                            planet.className = `planet type-${(index % 4) + 1}`;
+                            planet.innerText = `${id}班`;
+
+                            // 设置样式
+                            planet.style.width = `${size}px`;
+                            planet.style.height = `${size}px`;
+                            planet.style.fontSize = `${size / 4}px`;
+
+                            // ⚠️ 修正：转换为百分比定位
+                            planet.style.left = `${(x / containerWidth) * 100}%`;
+                            planet.style.top = `${(y / containerHeight) * 100}%`;
+
+                            // 动画设置
+                            const duration = Math.random() * 4 + 4;
+                            planet.style.animationDuration = `${duration}s`;
+                            planet.style.animationDelay = `-${Math.random() * 5}s`;
+
+                            // 点击事件
+                            planet.onclick = () => {
+                                window.location.href = `board.html?id=${id}&role=teacher&source=index`;
+                            };
+
+                            galaxyEl.appendChild(planet);
+
+                            // 6. 标记网格为已占用
+                            grid[row][col] = true;
+
+                            placed = true;
+                        }
+                    }
+
+                    if (!placed) {
+                        console.warn(`星球 ${id}班 放置失败，空间可能已满。`);
                     }
                 }
 
-                if (studentExists && p === '123456') {
-                    // 修复点：在 URL 中增加 user 参数，传递学号
-                    window.location.href = `class.html?id=${targetClassId}&role=student&user=${u}`;
-                } else {
-                    alert('学号不存在或密码错误！');
-                }
+                // ✅ 批量生成
+                classIds.forEach((id, index) => {
+                    setTimeout(() => {
+                        placePlanet(id, index);
+                    }, 0);
+                });
+
+            } catch (err) {
+                console.error('加载失败:', err);
+                galaxyEl.innerHTML = '<div style="color:white; text-align:center; margin-top:50px;">📡 数据加载失败，请刷新重试</div>';
             }
-        }
+        });
     </script>
 </body>
 </html>

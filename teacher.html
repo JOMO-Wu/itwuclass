@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>教师后台 - 多巴胺积分系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -14,45 +15,197 @@
             --text: #2d3436;
             --danger: #ff7675;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 0; color: var(--text); }
-        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            color: var(--text);
+        }
         /* 导航栏 */
-        .navbar { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .navbar h1 { margin: 0; color: var(--primary); }
-        .btn-logout { background: var(--pink); color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-
-        /* 布局 */
-        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
-        
-        /* 卡片通用样式 */
-        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; box-shadow: 0 10px 25px rgba(142, 68, 173, 0.1); margin-bottom: 30px; }
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .section-title { color: var(--primary); border-bottom: 3px solid var(--yellow); display: inline-block; padding-bottom: 5px; margin: 0; }
-
+        .navbar {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .navbar h1 {
+            margin: 0;
+            color: var(--primary);
+        }
+        .btn-logout {
+            background: var(--pink);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
         /* 按钮通用样式 */
-        .btn { padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-outline { background: transparent; border: 2px solid var(--primary); color: var(--primary); }
-        .btn:hover { opacity: 0.8; transform: scale(1.02); }
-
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.8;
+            transform: scale(1.02);
+        }
+        /* 布局 */
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(142, 68, 173, 0.1);
+            margin-bottom: 30px;
+        }
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            color: var(--primary);
+            border-bottom: 3px solid var(--yellow);
+            display: inline-block;
+            padding-bottom: 5px;
+            margin: 0;
+        }
         /* 班级网格 */
-        .class-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
-        .class-item { background: white; border: 2px solid var(--primary); color: var(--primary); padding: 20px; border-radius: 15px; text-align: center; font-weight: bold; cursor: pointer; transition: 0.2s; position: relative; }
-        .class-item:hover { background: var(--primary); color: white; transform: translateY(-3px); }
-        .class-item .del-btn { position: absolute; top: 5px; right: 5px; background: var(--danger); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+        }
+        .class-item {
+            background: white;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            position: relative;
+        }
+        .class-item:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-3px);
+        }
+        .class-item .del-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
         /* 标签样式 */
-        .item-list { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px; }
-        .tag { padding: 8px 15px; border-radius: 15px; color: white; font-size: 14px; display: flex; align-items: center; gap: 8px; }
-        .tag-plus { background: var(--primary); }
-        .tag-minus { background: var(--pink); }
-        .tag-identity { background: #a55eea; }
-        .tag button { background: rgba(0,0,0,0.2); border: none; color: white; width: 20px; height: 20px; border-radius: 50%; cursor: pointer; }
-
+        .item-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        .tag {
+            padding: 8px 15px;
+            border-radius: 15px;
+            color: white;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .tag-plus {
+            background: var(--primary);
+        }
+        .tag-minus {
+            background: var(--pink);
+        }
+        .tag-identity {
+            background: #a55eea;
+        }
+        .tag button {
+            background: rgba(0,0,0,0.2);
+            border: none;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
         /* 输入框组 */
-        .input-group { display: flex; gap: 10px; margin-top: 15px; }
-        .input-group input { padding: 10px; border-radius: 10px; border: 1px solid #ddd; flex: 1; }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .input-group input {
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            flex: 1;
+        }
+        /* 导入导出区域 */
+        .import-export {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px dashed #ddd;
+            text-align: center;
+        }
+        /* 修复上传按钮点击问题：确保 input 能响应点击 */
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
     </style>
 </head>
 <body>
@@ -61,18 +214,41 @@
         <button class="btn-logout" onclick="location.href='index.html'">退出登录</button>
     </div>
     <div class="container">
-        <!-- 班级管理 -->
+        <!-- 新增：导入导出数据模块 -->
+        <div class="card import-export">
+            <h3>💾 数据管理 (Excel)</h3>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <!-- 下载模板按钮 -->
+                <button class="btn btn-outline" onclick="downloadTemplate()">
+                    📄 下载空表格模板
+                </button>
+                <!-- 下载当前数据按钮 -->
+                <button class="btn btn-primary" onclick="downloadCurrentData()">
+                    ⬇️ 下载当前所有数据
+                </button>
+                <!-- 上传并更新名单按钮 -->
+                <div class="file-input-wrapper">
+                    <button class="btn btn-success" id="triggerUploadBtn">
+                        📤 上传并更新名单
+                    </button>
+                    <input type="file" id="importFile" class="file-input" accept=".xlsx, .xls">
+                </div>
+            </div>
+            <!-- 状态提示 -->
+            <div id="uploadStatus" style="margin-top: 10px; color: #666; font-size: 14px;"></div>
+        </div>
+
+        <!-- 1. 班级管理 -->
         <div class="card">
             <div class="section-header">
                 <h2 class="section-title">📚 班级管理</h2>
-                <button class="btn btn-primary" onclick="addNewClass()">+ 新建班级</button>
             </div>
             <div class="class-grid" id="class-list">
                 <!-- 班级将通过 JS 加载 -->
             </div>
         </div>
 
-        <!-- 身份管理 -->
+        <!-- 2. 身份管理 -->
         <div class="card">
             <div class="section-header">
                 <h2 class="section-title">🎖️ 身份管理</h2>
@@ -85,7 +261,7 @@
             </div>
         </div>
 
-        <!-- 积分项目管理 -->
+        <!-- 3. 积分项目管理 -->
         <div class="card">
             <div class="section-header">
                 <h2 class="section-title">⚙️ 积分管理</h2>
@@ -100,16 +276,46 @@
     </div>
 
     <script>
-        // ⚙️ 配置
+           // --- 🛡️ 新增安全守卫代码：放置在文件最顶部 ---
+    // 1. 立即检查本地存储
+    const auth = JSON.parse(localStorage.getItem('scoreSystemAuth'));
+    
+    // 2. 如果没有登录记录，或者身份不是 teacher，强制跳转回登录页
+    if (!auth || auth.role !== 'teacher') {
+        alert('⚠️ 请先登录！');
+        // 清除可能存在的错误数据，防止死循环
+        localStorage.removeItem('scoreSystemAuth');
+        window.location.href = 'login.html';
+        // 停止后续代码执行（虽然 JS 不能完全停止，但后续代码会因为 DOM 未加载而报错，这正是我们想要的）
+        throw new Error("未授权访问");
+    }else {
+    // ✅ 强制写入一个教师身份标记（如果还没有的话）
+    // 这通常在你点击登录按钮后的函数里，或者页面加载顶部
+    localStorage.setItem('scoreSystemAuth', JSON.stringify({
+        role: 'teacher',
+        authenticated: true
+        // 注意：这里不需要存班级ID，因为教师可以看所有班级
+    }));
+}
+    // --- 🛡️ 守卫代码结束 ---
+        // ⚙️ 配置 (请替换为你的实际 Supabase 密钥)
         const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 1. 初始化 LocalStorage (仅用于存配置，不存班级)
+        // 1. 初始化 LocalStorage
         function initDB() {
             const defaultDB = {
-                identities: [{ name: '组长', color: '#0984e3' }, { name: '课代表', color: '#e17055' }, { name: 'VIP', color: '#fdcb6e' }, { name: '平民', color: '#b2bec3' }],
-                items: [{name: '作业优秀', score: 2}, {name: '迟到', score: -1}]
+                identities: [
+                    { name: '组长', color: '#0984e3' },
+                    { name: '课代表', color: '#e17055' },
+                    { name: 'VIP', color: '#fdcb6e' },
+                    { name: '平民', color: '#b2bec3' }
+                ],
+                items: [
+                    {name: '作业优秀', score: 2},
+                    {name: '迟到', score: -1}
+                ]
             };
             let db = JSON.parse(localStorage.getItem('scoreSystemDB'));
             if (!db) {
@@ -120,125 +326,118 @@
         }
         let db = initDB();
 
-        // 2. 页面加载时执行
+        // 2. 页面加载
         window.addEventListener('DOMContentLoaded', () => {
-            loadClasses(); // 从云端加载班级
-            renderConfig(); // 从本地加载配置
+            const triggerBtn = document.getElementById('triggerUploadBtn');
+            const fileInput = document.getElementById('importFile');
+
+            // 点击按钮触发文件选择
+            triggerBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            // 选择文件后执行导入
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('uploadStatus').innerText = `已选择: ${file.name}，正在处理...`;
+                    importDataFromExcel(file);
+                }
+            });
+
+            // 加载班级和配置
+            loadClasses();
+            renderConfig();
         });
 
         // 3. 从 Supabase 加载班级
         async function loadClasses() {
             const list = document.getElementById('class-list');
             list.innerHTML = '<div style="color:#999; padding:20px;">正在加载云端数据...</div>';
-
             try {
-                // 查询所有学生，提取班级名
-                const { data, error } = await client
-                    .from('students')
-                    .select('class_name')
-                    .limit(1000); // 限制数量防止卡顿
-
+                const { data, error } = await client.from('students').select('class_name').limit(1000);
                 if (error) throw error;
-
-                // 去重：['701', '701', '702'] -> ['701', '702']
                 const classIds = [...new Set(data.map(item => item.class_name))];
-                
                 list.innerHTML = '';
                 if (classIds.length === 0) {
                     list.innerHTML = '<div style="color:#999; padding:20px;">暂无班级，请点击右上角创建</div>';
                     return;
                 }
-
                 classIds.forEach(id => {
                     const div = document.createElement('div');
                     div.className = 'class-item';
-                    div.innerHTML = `
-                        <button class="del-btn" onclick="deleteClass('${id}')">×</button>
-                        <div onclick="location.href='class.html?id=${id}'">${id}班</div>
-                    `;
+div.innerHTML = ` 
+    <button class="del-btn" onclick="deleteClass('${id}')">×</button> 
+    <div onclick="location.href='class.html?id=${id}&source=teacher'">${id}班</div> 
+`;
                     list.appendChild(div);
                 });
             } catch (err) {
                 console.error('加载失败:', err);
-                list.innerHTML = '<div style="color:red; padding:20px;">加载失败，请检查控制台</div>';
+                list.innerHTML = '<div style="color:red; padding:20px;">加载失败，请检查网络或密钥</div>';
             }
         }
 
-        // 4. 新建班级 (写入 Supabase)
-        async function addNewClass() {
-            const name = prompt("请输入班级名称 (例如: 701):");
-            if (!name) return;
-
-            // 检查是否已存在
-            const { data: existing } = await client.from('students').select('class_name').eq('class_name', name).limit(1);
-            if (existing && existing.length > 0) {
-                alert("该班级已存在！");
-                return;
-            }
-
-            await createClassAndSync(name);
-            loadClasses(); // 刷新列表
-        }
-
-        // 5. 初始化班级数据 (批量插入50个学生)
-        async function createClassAndSync(id) {
-            let students = [];
-            for(let i=1; i<=50; i++) {
-                let defaultIdentity = '平民';
-                if (i === 1) defaultIdentity = '组长';
-                if (i === 2) defaultIdentity = '课代表';
-                
-                students.push({
-                    id: `${id}${i.toString().padStart(2,'0')}`,
-                    name: `学生${i}`,
-                    class_name: id,
-                    score: 0,
-                    identity: defaultIdentity,
-                    group: `第${Math.ceil(i/10)}组`
-                });
-            }
+        // 4. 删除班级（核心修改：执行数据库删除）
+        async function deleteClass(className) {
+            if (confirm(`⚠️ 警告：确定要删除 ${className} 班的所有学生数据吗？
             
-            const { error } = await client.from('students').insert(students);
-            if (error) alert('创建失败: ' + error.message);
-        }
+            此操作将永久从云端数据库中删除该班级的所有记录，且无法恢复！`)) {
+                
+                try {
+                    // Supabase 语法：删除 students 表中 class_name 等于 className 的所有行
+                    const { error } = await client
+                        .from('students')
+                        .delete()
+                        .match({ class_name: className });
 
-        // 6. 删除班级
-        async function deleteClass(id) {
-            if(confirm(`确定要删除 ${id}班 吗？`)) {
-                await client.from('students').delete().eq('class_name', id);
-                loadClasses();
+                    if (error) throw error;
+
+                    alert(`✅ ${className} 班数据已成功删除`);
+                    // 刷新页面以更新班级列表
+                    location.reload();
+                } catch (err) {
+                    console.error('删除失败:', err);
+                    alert(`❌ 删除失败: ${err.message}`);
+                }
             }
         }
 
-        // 7. 渲染本地配置 (身份/项目)
+        // 5. 渲染身份和积分配置
         function renderConfig() {
             // 渲染身份
             const identityList = document.getElementById('identity-list');
             identityList.innerHTML = '';
-            if(db.identities) {
-                db.identities.forEach((identity, index) => {
+            if (db.identities && db.identities.length > 0) {
+                db.identities.forEach((item, index) => {
                     const tag = document.createElement('div');
                     tag.className = 'tag tag-identity';
-                    tag.style.backgroundColor = identity.color;
-                    tag.innerHTML = ` ${identity.name} <button onclick="deleteIdentity(${index})">×</button> `;
+                    tag.innerHTML = `
+                        <span style="background:${item.color};width:12px;height:12px;border-radius:50%;display:inline-block;"></span>
+                        ${item.name}
+                        <button onclick="deleteIdentity(${index})">×</button>
+                    `;
                     identityList.appendChild(tag);
                 });
             }
 
-            // 渲染项目
+            // 渲染积分项目
             const itemList = document.getElementById('item-list');
             itemList.innerHTML = '';
-            if(db.items) {
+            if (db.items && db.items.length > 0) {
                 db.items.forEach((item, index) => {
                     const tag = document.createElement('div');
                     tag.className = `tag ${item.score >= 0 ? 'tag-plus' : 'tag-minus'}`;
-                    tag.innerHTML = ` ${item.name} (${item.score>0?'+':''}${item.score}) <button onclick="deleteItem(${index})">×</button> `;
+                    tag.innerHTML = `
+                        ${item.name} (${item.score>0?'+':''}${item.score})
+                        <button onclick="deleteItem(${index})">×</button>
+                    `;
                     itemList.appendChild(tag);
                 });
             }
         }
 
-        // 8. 配置操作函数
+        // 6. 配置操作函数
         window.addIdentity = function() {
             const name = document.getElementById('identity-name').value;
             const color = document.getElementById('identity-color').value;
@@ -274,9 +473,129 @@
             saveData();
             renderConfig();
         }
-
         function saveData() {
             localStorage.setItem('scoreSystemDB', JSON.stringify(db));
+        }
+
+        // ==================================================================
+        // 🆕 优化版：Excel 导入导出逻辑
+        // ==================================================================
+        // 1. 下载空表格模板 (仅包含必要字段)
+        function downloadTemplate() {
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ["班级 (必填)", "小组 (必填)", "座位号 (必填)", "姓名 (必填)", "身份 (选填)"],
+                ["例如: 701", "例如: 第1组", "例如: 01", "例如: 张三", "例如: 组长"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "导入模板");
+            XLSX.writeFile(wb, "多巴胺系统_学生名单模板.xlsx");
+        }
+
+        // 2. 下载当前所有数据 (保持不变，用于备份)
+        async function downloadCurrentData() {
+            try {
+                const { data, error } = await client.from('students').select('*');
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    const ws = XLSX.utils.json_to_sheet(data);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "导出数据");
+                    XLSX.writeFile(wb, `多巴胺系统_全量数据_${new Date().toLocaleDateString()}.xlsx`);
+                } else {
+                    alert("暂无数据可导出");
+                }
+            } catch (err) {
+                console.error("导出失败:", err);
+                alert("导出失败");
+            }
+        }
+
+        // 3. 读取并导入 Excel 数据 (核心逻辑重写)
+        async function importDataFromExcel(file) {
+            setTimeout(() => {
+                document.getElementById('uploadStatus').innerText = '正在解析文件...';
+            }, 100);
+            if (!confirm("确定要导入并更新名单吗？这将覆盖云端现有数据。")) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[sheetName];
+
+                    // 读取 Excel 数据 (A-E列)
+                    // 0:班级, 1:小组, 2:座位号, 3:姓名, 4:身份
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ''});
+                    const studentsToInsert = [];
+
+                    // --- 新增逻辑：自动生成ID和补全数据 ---
+                    for (let i = 1; i < jsonData.length; i++) {
+                        const row = jsonData[i];
+
+                        // 1. 校验必填项 (班级, 座位号, 姓名)
+                        if (row.length < 4 || !row[0] || !row[2] || !row[3]) {
+                            console.warn(`第 ${i+1} 行数据缺失（班级/座位号/姓名），已跳过。`);
+                            continue;
+                        }
+
+                        const className = String(row[0]).trim();
+                        const groupName = String(row[1]).trim() || '未分组';
+                        const seatRaw = String(row[2]).trim();
+                        const studentName = String(row[3]).trim();
+
+                        // 2. 生成标准座位号 (两位数)
+                        // 如果用户输入的是 1，转为 01；如果是 10，保持 10
+                        const seatNumber = seatRaw.padStart(2, '0');
+
+                        // 3. 自动生成 ID (班级+座位号)
+                        const generatedId = className + seatNumber;
+
+                        // 4. 处理身份 (如果为空则默认为“平民”)
+                        let identity = '平民';
+                        if (row[4] && String(row[4]).trim() !== '') {
+                            identity = String(row[4]).trim();
+                        }
+
+                        // 5. 构建学生对象 (积分默认为0)
+                        const student = {
+                            id: generatedId, // 系统生成
+                            name: studentName,
+                            class_name: className,
+                            group: groupName,
+                            seat: parseInt(seatNumber), // 保存数字座位号用于排序
+                            score: 0, // 默认积分
+                            identity: identity // 可能是用户填的，也可能是默认的
+                        };
+                        studentsToInsert.push(student);
+                    }
+                    // --- 逻辑结束 ---
+
+                    if (studentsToInsert.length === 0) {
+                        document.getElementById('uploadStatus').innerText = '错误：未找到有效数据';
+                        alert("未找到有效数据，请检查表格格式");
+                        return;
+                    }
+
+                    document.getElementById('uploadStatus').innerText = `正在上传 ${studentsToInsert.length} 条数据...`;
+                    const { error: upsertError } = await client
+                        .from('students')
+                        .upsert(studentsToInsert, { onConflict: 'id' }); // 根据ID更新
+
+                    if (upsertError) throw upsertError;
+
+                    document.getElementById('uploadStatus').innerText = '导入成功！页面即将刷新。';
+                    alert(`成功导入 ${studentsToInsert.length} 名学生！`);
+                    location.reload();
+                } catch (err) {
+                    console.error("导入失败:", err);
+                    document.getElementById('uploadStatus').innerText = '导入失败: ' + err.message;
+                    alert("导入失败，请检查文件格式或控制台错误");
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
     </script>
 </body>
