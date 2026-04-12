@@ -303,28 +303,213 @@
         const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // 1. 初始化 LocalStorage
-        function initDB() {
-            const defaultDB = {
-                identities: [
-                    { name: '组长', color: '#0984e3' },
-                    { name: '课代表', color: '#e17055' },
-                    { name: 'VIP', color: '#fdcb6e' },
-                    { name: '平民', color: '#b2bec3' }
-                ],
-                items: [
-                    {name: '作业优秀', score: 2},
-                    {name: '迟到', score: -1}
-                ]
-            };
-            let db = JSON.parse(localStorage.getItem('scoreSystemDB'));
-            if (!db) {
-                localStorage.setItem('scoreSystemDB', JSON.stringify(defaultDB));
-                return defaultDB;
-            }
-            return db;
+// ✅ 1. 初始化数据：从云端加载
+// 用一个空对象代替原来的 localStorage 数据
+let db = { identities: [], items: [] };
+
+async function loadConfigFromServer() {
+    try {
+        const { data, error } = await client
+            .from('config_db')
+            .select('type, data')
+            .in('type', ['identities', 'items']);
+
+        if (error && error.code !== 'PGRST116') {
+            console.error('配置查询错误:', error);
+            return;
         }
-        let db = initDB();
+
+        if (data && data.length > 0) {
+            data.forEach(row => {
+                if (row.type === 'identities') db.identities = row.data;
+                if (row.type === 'items') db.items = row.data;
+            });
+        } else {
+            // ✅ 数据库为空时，使用默认数据填充
+            db.identities = [
+                { name: '组长', color: '#0984e3' },
+                { name: '课代表', color: '#e17055' },
+                { name: 'VIP', color: '#fdcb6e' },
+                { name: '平民', color: '#b2bec3' }
+            ];
+            db.items = [
+                { name: '作业优秀', score: 2 },
+                { name: '迟到', score: -1 }
+            ];
+            // 自动保存默认数据到云端
+            await saveConfigToServer(db);
+        }
+    } catch (err) {
+        console.error('加载配置失败:', err);
+    }
+}
+
+// ✅ 2. 页面加载逻辑
+window.addEventListener('DOMContentLoaded', async () => {
+    // 1. 先从云端加载配置
+    await loadConfigFromServer();
+    
+    // 2. 渲染页面
+    renderConfig();
+    
+    // 3. 加载班级列表 (原有的 loadClasses 函数)
+    loadClasses();
+
+    // ... (保留原有的文件上传按钮逻辑绑定) ...
+    const triggerBtn = document.getElementById('triggerUploadBtn');
+    const fileInput = document.getElementById('importFile');
+    if (triggerBtn && fileInput) {
+        triggerBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                document.getElementById('uploadStatus').innerText = `已选择: ${file.name}，正在处理...`;
+                importDataFromExcel(file);
+            }
+        });
+    }
+});
+
+// --- 核心修改：渲染函数 (保持不变，只改数据源) ---
+function renderConfig() {
+    // 渲染身份
+    const identityList = document.getElementById('identity-list');
+    if (identityList) {
+        identityList.innerHTML = '';
+        (db.identities || []).forEach((item, index) => {
+            const tag = document.createElement('div');
+            tag.className = 'tag tag-identity';
+            tag.innerHTML = ` 
+                <span style="background:${item.color};width:12px;height:12px;border-radius:50%;display:inline-block;"></span> 
+                ${item.name} 
+                <button onclick="deleteIdentity(${index})">×</button> 
+            `;
+            identityList.appendChild(tag);
+        });
+    }
+
+    // 渲染积分项目
+    const itemList = document.getElementById('item-list');
+    if (itemList) {
+        itemList.innerHTML = '';
+        (db.items || []).forEach((item, index) => {
+            const tag = document.createElement('div');
+            tag.className = `tag ${item.score >= 0 ? 'tag-plus' : 'tag-minus'}`;
+            tag.innerHTML = ` 
+                ${item.name} (${item.score>0?'+':''}${item.score}) 
+                <button onclick="deleteItem(${index})">×</button> 
+            `;
+            itemList.appendChild(tag);
+        });
+    }
+}
+
+// --- 核心修改：数据持久化逻辑 ---
+
+// ✅ 保存到云端数据库 (最终修正版 - 使用 Delete+Insert 策略)
+async function saveConfigToServer(config) {
+    console.log('💾 开始保存配置...');
+    
+    try {
+        // 1. 准备要保存的两组数据
+        const identitiesData = config.identities || [];
+        const itemsData = config.items || [];
+
+        // 2. 先删除旧数据 (清理战场)
+        // 我们分别删除 identities 和 items 类型的旧记录
+        const { error: deleteError1 } = await client
+            .from('config_db')
+            .delete()
+            .eq('type', 'identities');
+            
+        const { error: deleteError2 } = await client
+            .from('config_db')
+            .delete()
+            .eq('type', 'items');
+
+        if (deleteError1) throw deleteError1;
+        if (deleteError2) throw deleteError2;
+
+        // 3. 插入新数据 (写入新数据)
+        const { error: insertError } = await client
+            .from('config_db')
+            .insert([
+                { type: 'identities', data: identitiesData },
+                { type: 'items', data: itemsData }
+            ]);
+
+        if (insertError) throw insertError;
+
+        console.log('✅ 配置保存成功！');
+        // 同步到本地缓存
+        localStorage.setItem('scoreSystemDB', JSON.stringify(config));
+
+    } catch (error) {
+        console.error('❌ 保存失败:', error);
+        alert('保存失败: ' + error.message);
+    }
+}
+
+// ✅ 3. 配置操作函数 (修改后：操作内存后同步到云端)
+
+window.addIdentity = async function() {
+    const nameInput = document.getElementById('identity-name');
+    const colorInput = document.getElementById('identity-color');
+    const name = nameInput.value.trim();
+    const color = colorInput.value;
+
+    if (!name) return;
+
+    if (!db.identities) db.identities = [];
+    db.identities.push({ name, color });
+
+    // ✅ 保存到数据库
+    await saveConfigToServer(db);
+    
+    // ✅ 刷新视图
+    renderConfig();
+    
+    // ✅ 清空输入框
+    nameInput.value = '';
+}
+
+window.deleteIdentity = async function(index) {
+    if (!confirm("删除该身份？")) return;
+    
+    db.identities.splice(index, 1);
+    
+    // ✅ 保存到数据库
+    await saveConfigToServer(db);
+    renderConfig();
+}
+
+window.addItem = async function() {
+    const nameInput = document.getElementById('item-name');
+    const scoreInput = document.getElementById('item-score');
+    const name = nameInput.value.trim();
+    const score = parseInt(scoreInput.value);
+
+    if (!name || isNaN(score)) return;
+
+    if (!db.items) db.items = [];
+    db.items.push({ name, score });
+
+    // ✅ 保存到数据库
+    await saveConfigToServer(db);
+    renderConfig();
+    
+    // ✅ 清空输入框
+    nameInput.value = '';
+    scoreInput.value = '';
+}
+
+window.deleteItem = async function(index) {
+    db.items.splice(index, 1);
+    
+    // ✅ 保存到数据库
+    await saveConfigToServer(db);
+    renderConfig();
+}
 
         // 2. 页面加载
         window.addEventListener('DOMContentLoaded', () => {
@@ -435,46 +620,6 @@ div.innerHTML = `
                     itemList.appendChild(tag);
                 });
             }
-        }
-
-        // 6. 配置操作函数
-        window.addIdentity = function() {
-            const name = document.getElementById('identity-name').value;
-            const color = document.getElementById('identity-color').value;
-            if(name) {
-                if(!db.identities) db.identities = [];
-                db.identities.push({name, color});
-                saveData();
-                renderConfig();
-                document.getElementById('identity-name').value = '';
-            }
-        }
-        window.deleteIdentity = function(index) {
-            if(confirm("删除该身份？")) {
-                db.identities.splice(index, 1);
-                saveData();
-                renderConfig();
-            }
-        }
-        window.addItem = function() {
-            const name = document.getElementById('item-name').value;
-            const score = parseInt(document.getElementById('item-score').value);
-            if(name && !isNaN(score)) {
-                if(!db.items) db.items = [];
-                db.items.push({name, score});
-                saveData();
-                renderConfig();
-                document.getElementById('item-name').value = '';
-                document.getElementById('item-score').value = '';
-            }
-        }
-        window.deleteItem = function(index) {
-            db.items.splice(index, 1);
-            saveData();
-            renderConfig();
-        }
-        function saveData() {
-            localStorage.setItem('scoreSystemDB', JSON.stringify(db));
         }
 
         // ==================================================================
