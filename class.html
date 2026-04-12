@@ -425,10 +425,12 @@ window.scoreSystemDB = db;
             const urlParams = new URLSearchParams(window.location.search);
             currentClassId = urlParams.get('id');
             
-            const urlRole = urlParams.get('role');
-            if (urlRole === 'representative') {
-                currentRole = 'representative';
-            }
+    const urlRole = urlParams.get('role');
+    if (urlRole === 'representative' || urlRole === 'student') {
+        currentRole = 'representative'; 
+    } else {
+        currentRole = 'teacher'; // 默认是教师
+    }
 
             if (currentClassId) {
                 const titlePrefix = currentRole === 'representative' ? '[课代表] ' : '';
@@ -621,7 +623,13 @@ window.scoreSystemDB = db;
             await client.from('students').update({ score: stu.score }).eq('id', id);
 
             // 2. 写入历史记录
-            const operatorName = currentRole === 'representative' ? '课代表' : '教师';
+    // ✅ 修复并强化：明确区分操作人身份
+    let operatorName = '';
+    if (currentRole === 'representative') {
+        operatorName = '课代表';
+    } else {
+        operatorName = '教师'; // 默认为教师
+    }
 
             await client.from('score_history').insert({
                 student_id: id,
