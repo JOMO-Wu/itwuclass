@@ -16,63 +16,63 @@
             --gold: #FFD700;
             --silver: #C0C0C2;
             --bronze: #CD7F32;
-            /* 身份标签颜色变量 */
-            --tag-leader-bg: #fff3e0; --tag-leader-text: #ef6c00; /* 组长-橙色 */
-            --tag-rep-bg: #e3f2fd; --tag-rep-text: #1565c0;       /* 课代表-蓝色 */
-            --tag-default-bg: #f3e5f5; --tag-default-text: #8e44ad; /* 默认-紫色 */
-            --tag-rep-text: #1565c0; /* 深蓝色文字 */
+            /* 默认身份颜色，当数据库未加载时使用 */
+            --default-identity-color: #b2bec3;
         }
-        
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background-color: var(--bg); 
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
             color: var(--text);
-            margin: 0; 
-            padding: 0; 
+            margin: 0;
+            padding: 0;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        .navbar { 
-            background: var(--card-bg); 
-            padding: 15px 30px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1); 
-            position: sticky; 
-            top: 0; 
-            z-index: 100; 
+        .navbar {
+            background: var(--card-bg);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(142, 68, 173, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .navbar h1 { 
-            margin: 0; 
-            color: var(--primary); 
-            font-size: 1.5rem; 
+
+        .navbar h1 {
+            margin: 0;
+            color: var(--primary);
+            font-size: 1.5rem;
         }
-        .back-btn { 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 25px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: 0.3s; 
+
+        .back-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
         }
-        .back-btn:hover { 
-            background: #732d91; 
-            transform: scale(1.05); 
+
+        .back-btn:hover {
+            background: #732d91;
+            transform: scale(1.05);
         }
 
         /* 布局：左中右三列 */
         .container {
-            max-width: 1600px; 
+            max-width: 1600px;
             margin: 20px auto;
             padding: 0 20px;
             flex: 1;
             display: grid;
-            grid-template-columns: 3fr 2fr 1fr; 
+            grid-template-columns: 3fr 2fr 1fr;
             gap: 20px;
         }
 
@@ -103,36 +103,39 @@
             border-collapse: collapse;
             margin-top: 10px;
         }
+
         th, td {
             padding: 12px 15px;
             text-align: left;
             border-bottom: 1px solid var(--border);
         }
+
         th {
             background-color: #f8f9fa;
             color: var(--primary);
             font-weight: bold;
         }
+
         tr:hover {
             background-color: #f1f2f6;
         }
 
-        /* --- 修改点：同步 Class 页面的身份 Badge 样式 --- */
-        /* 身份标签样式 (与 Class 页面保持一致) */
+        /* 身份标签样式 */
         .identity-tag {
             padding: 5px 12px;
             border-radius: 12px;
-            font-size: 0.8rem; /* 与 Class 保持一致 */
+            font-size: 0.8rem;
             font-weight: bold;
             color: white;
-            /* 背景色由 JS 动态注入 */
         }
-        /* 链接样式 (保持与左侧一致) */
+
+        /* 链接样式 */
         .stu-link {
             color: var(--text);
             text-decoration: none;
             font-weight: bold;
         }
+
         .stu-link:hover {
             color: var(--pink);
         }
@@ -144,32 +147,33 @@
             padding: 12px 0;
             border-bottom: 1px dashed #eee;
         }
+
         .leaderboard-item:last-child {
             border-bottom: none;
         }
+
         .rank {
             width: 30px;
             font-weight: bold;
             font-size: 1.1rem;
             margin-right: 10px;
         }
+
         .rank-1 { color: var(--gold); }
         .rank-2 { color: var(--silver); }
         .rank-3 { color: var(--bronze); }
-        
-        /* 名字/组名区域 */
+
         .item-name {
             flex: 1;
             font-weight: 500;
             color: #444;
         }
-        
-        /* 分数区域 - 关键修改点：添加 margin-left: auto 实现居右 */
+
         .item-score {
             font-weight: bold;
             color: var(--primary);
             font-size: 1.1rem;
-            margin-left: auto; /* 核心代码：将分数推到最右边 */
+            margin-left: auto;
         }
 
         .footer {
@@ -216,7 +220,7 @@
 
         <!-- 中间：个人积分排行榜 -->
         <div class="card">
-            <h2>🏆 个人排行榜(　ﾟ∀ﾟ) ﾉ♡</h2>
+            <h2>🏆 个人排行榜</h2>
             <div id="leaderboard-list">
                 <!-- 数据将由 JS 注入 -->
             </div>
@@ -246,26 +250,56 @@
         const classId = urlParams.get('id');
         const source = urlParams.get('source') || 'index';
 
-        // 3. 页面加载逻辑
-        window.addEventListener('DOMContentLoaded', () => {
+        // 3. 全局变量用于存储从数据库获取的身份配置
+        let identityConfigMap = new Map();
+
+        // 4. 页面加载逻辑
+        window.addEventListener('DOMContentLoaded', async () => {
             if (!classId) {
                 document.getElementById('loading').innerText = '错误：未指定班级ID';
                 return;
             }
-            document.getElementById('page-title').innerText = `${classId}班 排行榜(✪ω✪)`;
-            loadClassData();
+            document.getElementById('page-title').innerText = `${classId}班 排行榜`;
+
+            // ✅ 第一步：从数据库加载身份配置
+            const configLoaded = await loadIdentityConfigFromDB();
+            
+            // ✅ 第二步：加载并渲染班级数据（无论配置是否加载成功，都继续渲染，避免页面白屏）
+            await loadAndRenderClassData(configLoaded);
         });
 
-        // 辅助函数：根据身份文字返回对应的 CSS 类名
-        function getIdentityClass(identity) {
-            if (!identity) return 'tag-default';
-            if (identity.includes('组长')) return 'tag-leader';
-            if (identity.includes('课代表')) return 'tag-rep';
-            return 'tag-default';
+        // 5. 从数据库加载身份配置
+        async function loadIdentityConfigFromDB() {
+            try {
+                // 直接查询 config_db 表，获取最新的 identities 数据
+                const { data, error } = await client
+                    .from('config_db')
+                    .select('type, data')
+                    .in('type', ['identities']);
+
+                if (error) {
+                    console.warn('⚠️ 无法从数据库获取身份配置，将使用默认颜色:', error.message);
+                    return false;
+                }
+
+                if (data && data.length > 0) {
+                    // 构建一个 Map 以便快速查找颜色
+                    const identities = data.find(item => item.type === 'identities')?.data || [];
+                    identities.forEach(item => {
+                        identityConfigMap.set(item.name, item.color);
+                    });
+                    console.log('✅ 身份配置加载自云端数据库');
+                    return true;
+                }
+                return false;
+            } catch (err) {
+                console.error('❌ 配置加载异常:', err);
+                return false;
+            }
         }
 
-        // 4. 加载班级数据
-        async function loadClassData() {
+        // 6. 加载并渲染班级数据
+        async function loadAndRenderClassData(configLoaded) {
             const loadingEl = document.getElementById('loading');
             const tableContainer = document.getElementById('table-container');
             const tbody = document.querySelector('#students-table tbody');
@@ -273,81 +307,60 @@
             const groupLeaderboardEl = document.getElementById('group-leaderboard-list');
 
             try {
-                loadingEl.style.display = 'block';
-                tableContainer.style.display = 'none';
-// --- 新增代码：强制从 LocalStorage 获取最新配置 ---
-        // 因为 board.html 可能不是从 teacher.html 直接跳转的，所以 window.scoreSystemDB 可能不存在
-        // 我们必须手动读取 localStorage 中 teacher.html 保存的最新数据
-        const savedDB = localStorage.getItem('scoreSystemDB');
-        let localDB = { identities: [] };
-        
-        if (savedDB) {
-            try {
-                localDB = JSON.parse(savedDB);
-                // 确保 window.scoreSystemDB 也是最新的，供其他地方使用
-                window.scoreSystemDB = localDB; 
-            } catch (e) {
-                console.error('解析本地配置失败', e);
-            }
-        }
-        // --- 新增代码结束 ---
-                // 查询数据
-                const { data, error } = await client
+                const { data: students, error: studentError } = await client
                     .from('students')
                     .select('*')
                     .eq('class_name', classId);
 
-                if (error) throw error;
+                if (studentError) throw studentError;
 
-                if (!data || data.length === 0) {
+                loadingEl.style.display = 'none';
+                tableContainer.style.display = 'block';
+
+                if (!students || students.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无学生数据</td></tr>';
                     leaderboardContainer.innerHTML = '<div style="color:#999; padding:20px;">暂无排名数据</div>';
                     groupLeaderboardEl.innerHTML = '<div style="color:#999; padding:20px;">暂无小组数据</div>';
                 } else {
-            // 4.1 渲染左侧表格：按座位号升序排序
-            // 4.1 渲染左侧表格：按座位号升序排序
-            const sortedBySeat = [...data].sort((a, b) => {
-                if (!a.seat && !b.seat) return 0;
-                if (!a.seat) return 1;
-                if (!b.seat) return -1;
-                return a.seat - b.seat;
-            });
+                    // 6.1 渲染左侧表格
+                    const sortedBySeat = [...students].sort((a, b) => {
+                        if (!a.seat && !b.seat) return 0;
+                        if (!a.seat) return 1;
+                        if (!b.seat) return -1;
+                        return a.seat - b.seat;
+                    });
 
-            tbody.innerHTML = '';
-            sortedBySeat.forEach(student => {
-                const tr = document.createElement('tr');
-                
-                // --- 核心修改：同步 Class.html 的身份颜色逻辑 ---
-                // 这里的逻辑与 class.html 中的 renderTable 完全一致
-                // 1. 尝试从 window.scoreSystemDB (即后台配置) 获取颜色
-                // 2. 如果没有配置，使用默认颜色
-                const identityConfig = (window.scoreSystemDB?.identities || [])
-                    .find(i => i.name === student.identity) || { 
-                        name: student.identity || '平民', 
-                        color: '#b2bec3' // 默认灰色，与 Class 页面默认值一致
-                    };
+                    tbody.innerHTML = '';
+                    sortedBySeat.forEach(student => {
+                        const tr = document.createElement('tr');
+                        
+                        // ✅ 核心逻辑：优先使用数据库获取的颜色，如果没有则使用默认灰色
+                        let bgColor = 'var(--default-identity-color)';
+                        if (configLoaded && student.identity) {
+                            const color = identityConfigMap.get(student.identity);
+                            if (color) {
+                                bgColor = color;
+                            }
+                        }
 
-                tr.innerHTML = `
-                    <td>${student.seat || '未排'}</td> 
-                    <td><a href="student.html?id=${student.id}" class="stu-link">${student.name}</a></td>
-                    
-                    <!-- 修改点：使用同步的 Badge 样式 -->
-                    <td>
-                        <span class="identity-tag" style="background-color: ${identityConfig.color};">
-                            ${student.identity || '平民'}
-                        </span>
-                    </td>
-                    
-                    <td>${student.group || '-'}</td>
-                    <td><strong style="color: var(--primary); font-size: 1.1rem;">${student.score}</strong></td>
-                `;
-                tbody.appendChild(tr);
-            });
+                        tr.innerHTML = `
+                            <td>${student.seat || '未排'}</td>
+                            <td><a href="student.html?id=${student.id}" class="stu-link">${student.name}</a></td>
+                            <td>
+                                <span class="identity-tag" style="background-color: ${bgColor};">
+                                    ${student.identity || '平民'}
+                                </span>
+                            </td>
+                            <td>${student.group || '-'}</td>
+                            <td><strong style="color: var(--primary); font-size: 1.1rem;">${student.score}</strong></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
 
-                    // 4.2 渲染中间：个人排行榜
-                    const rankedStudents = data
-                        .filter(student => student.score != 0)
-                        .sort((a, b) => b.score - a.score); 
+                    // 6.2 渲染个人排行榜 (逻辑保持不变)
+                    const rankedStudents = students
+                        .filter(s => s.score > 0)
+                        .sort((a, b) => b.score - a.score);
 
                     leaderboardContainer.innerHTML = '';
                     if (rankedStudents.length === 0) {
@@ -356,30 +369,22 @@
                         rankedStudents.forEach((student, index) => {
                             const rank = index + 1;
                             const rankClass = rank <= 3 ? `rank rank-${rank}` : 'rank';
-                            
                             const item = document.createElement('div');
                             item.className = 'leaderboard-item';
-                            
-                            // 修改点：姓名保持链接样式，分数使用 .item-score 类（已设置 margin-left: auto）
                             item.innerHTML = `
                                 <span class="${rankClass}">${rank}</span>
-                                <!-- 姓名链接 -->
                                 <a href="student.html?id=${student.id}" class="stu-link">${student.name}</a>
-                                <!-- 分数：已自动居右 -->
                                 <span class="item-score">${student.score}分</span>
                             `;
                             leaderboardContainer.appendChild(item);
                         });
                     }
 
-                    // 4.3 渲染右侧：小组排行榜
+                    // 6.3 渲染小组排行榜 (逻辑保持不变)
                     const groupScores = {};
-                    data.forEach(student => {
+                    students.forEach(student => {
                         const groupName = student.group || '未分组';
-                        if (!groupScores[groupName]) {
-                            groupScores[groupName] = 0;
-                        }
-                        groupScores[groupName] += student.score;
+                        groupScores[groupName] = (groupScores[groupName] || 0) + student.score;
                     });
 
                     const sortedGroups = Object.entries(groupScores)
@@ -405,16 +410,14 @@
                     }
                 }
 
-                loadingEl.style.display = 'none';
-                tableContainer.style.display = 'block';
-
             } catch (err) {
-                console.error('加载失败:', err);
-                loadingEl.innerText = '加载失败：' + err.message;
+                console.error('数据加载失败:', err);
+                loadingEl.innerText = '数据加载失败，请检查网络';
+                tableContainer.style.display = 'none';
             }
         }
 
-        // 5. 返回逻辑
+        // 7. 返回逻辑
         function goBack() {
             if (source === 'index') {
                 window.location.href = 'index.html';

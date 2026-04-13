@@ -235,7 +235,7 @@
         }
         /* 强制文字输入框宽度为 75% */
         .custom-input-group input[type="text"] {
-            flex: 0 0 75%; 
+            flex: 0 0 75%;
             max-width: 75%;
             padding: 12px;
             font-size: 1rem;
@@ -274,7 +274,7 @@
                 <h2>👥 学生列表</h2>
                 <span style="color: #999;">☁️ 云端同步中</span>
             </div>
-            <div id="loading">正在加载数据...</div>
+            <div id="loading">正在加载配置...</div>
             <table id="data-table" style="display: none;">
                 <thead>
                     <tr>
@@ -327,7 +327,6 @@
                 <span class="close" onclick="closeModal('scoreModal')">&times;</span>
             </div>
             <input type="hidden" id="score-stu-id">
-            
             <!-- 预设项目选择 -->
             <div class="form-row">
                 <select id="select-add" class="form-control" onchange="handleSelectChange('add')">
@@ -337,7 +336,6 @@
                     <option value="0">❌ 选择扣分项目</option>
                 </select>
             </div>
-
             <!-- 自定义输入区域 -->
             <div class="custom-input-group">
                 <label>📝 其他项目 (手动输入):</label>
@@ -346,7 +344,6 @@
                     <input type="number" id="custom-score" placeholder="分数">
                 </div>
             </div>
-
             <div class="form-group" style="margin-top: 15px;">
                 <label>当前预览变动：</label>
                 <span id="preview-score" style="font-weight:bold; font-size: 1.2rem; margin-left: 10px;">0</span>
@@ -356,86 +353,70 @@
     </div>
 
     <script>
-// --- 🛡️ 修复后的安全守卫代码：放置在文件最顶部 ---
-const urlParams = new URLSearchParams(window.location.search);
-const requestedClassId = urlParams.get('id');
-// 1. 统一获取本地存储
-const auth = JSON.parse(localStorage.getItem('scoreSystemAuth')); 
-
-// 2. 检查逻辑分发
-// 情况 A: 如果是课代表模式
-if (urlParams.get('role') === 'representative') {
-    if (!auth || !auth.authenticated || auth.role !== 'representative' || !auth.classId || auth.classId !== requestedClassId) {
-        alert('❌ 课代表身份验证失败或已过期！');
-        localStorage.removeItem('scoreSystemAuth');
-        window.location.href = 'login.html';
-        throw new Error("未授权访问");
-    }
-} 
-// 情况 B: 如果是普通学生
-else if (urlParams.get('role') === 'student') {
-    if (!auth || auth.role !== 'student') {
-        alert('⚠️ 学生登录失效，请先登录！');
-        localStorage.removeItem('scoreSystemAuth');
-        window.location.href = 'login.html';
-        throw new Error("未授权访问");
-    }
-    if (auth.classId && auth.classId !== requestedClassId) {
-        alert('🚫 你无权访问该班级！');
-        window.location.href = `class.html?id=${auth.classId}&role=student`;
-        throw new Error("越权访问");
-    }
-}
-// ✅ 情况 C: 如果是教师跳转 (核心修复：不再只看 URL，而是看 localStorage)
-else {
-    // 1. 检查是否真的有教师身份
-    if (!auth || auth.role !== 'teacher' || !auth.authenticated) {
-        alert('⚠️ 教师权限验证失败，请重新登录 teacher.html！');
-        localStorage.removeItem('scoreSystemAuth');
-        window.location.href = 'login.html'; // 或者跳转到 teacher.html
-        throw new Error("未授权访问");
-    }
-    // 2. 检查来源是否正确 (防止直接伪造 URL)
-    const source = urlParams.get('source');
-    if (source !== 'teacher') {
-        alert('⚠️ 非法访问来源！');
-        throw new Error("非法来源");
-    }
-    // ✅ 验证通过：说明 localStorage 里有教师令牌，且 URL 是从 teacher 来的
-    // 代码继续执行，进入班级页面
-}
-// --- 🛡️ 守卫代码结束 ---
         // ⚙️ 配置
         const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
         const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
+        // 📦 全局数据对象
         let studentsData = [];
         let currentClassId = '';
         let currentRole = 'teacher';
-        let db = {};
-// --- 新增代码：将 DB 配置暴露给 board.html 使用 ---
-// 这样 board 页面才能读取到相同的身份颜色配置
-window.scoreSystemDB = db;
-        // 初始化
-        window.addEventListener('DOMContentLoaded', () => {
-            const storedDB = localStorage.getItem('scoreSystemDB');
-            if (storedDB) db = JSON.parse(storedDB);
+        // 注意：我们不再从 localStorage 初始化 db
+        let db = { identities: [], items: [] };
 
+        // ✅ 新增：从云端加载配置 (与 teacher.html 逻辑一致)
+        async function loadConfigFromServer() {
+            try {
+                console.log('🔄 class.html: 正在从云端加载配置...');
+                const { data, error } = await client
+                    .from('config_db')
+                    .select('type, data')
+                    .in('type', ['identities', 'items']);
+
+                if (error) {
+                    console.error('❌ 配置查询错误:', error);
+                    return;
+                }
+
+                // 初始化
+                db.identities = [];
+                db.items = [];
+
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        if (row.type === 'identities') db.identities = row.data;
+                        if (row.type === 'items') db.items = row.data;
+                    });
+                }
+
+                console.log('✅ 成功加载云端配置:', db);
+
+            } catch (err) {
+                console.error('❌ 加载配置异常:', err);
+            }
+        }
+
+        // 2. 页面加载逻辑
+        window.addEventListener('DOMContentLoaded', async () => {
+            // ✅ 2.1 先从云端加载配置 (核心步骤)
+            await loadConfigFromServer();
+            
+            // ✅ 2.2 现在 db 已经有数据了，继续执行原有逻辑
             const urlParams = new URLSearchParams(window.location.search);
             currentClassId = urlParams.get('id');
-            
-    const urlRole = urlParams.get('role');
-    if (urlRole === 'representative' || urlRole === 'student') {
-        currentRole = 'representative'; 
-    } else {
-        currentRole = 'teacher'; // 默认是教师
-    }
+            const urlRole = urlParams.get('role');
+
+            if (urlRole === 'representative' || urlRole === 'student') {
+                currentRole = 'representative';
+            } else {
+                currentRole = 'teacher';
+            }
 
             if (currentClassId) {
                 const titlePrefix = currentRole === 'representative' ? '[课代表] ' : '';
                 document.getElementById('class-title').innerText = `${titlePrefix}${currentClassId}班 - 管理`;
-                loadClassData(currentClassId);
+                await loadClassData(currentClassId);
             }
 
             const backBtn = document.getElementById('back-btn');
@@ -452,249 +433,257 @@ window.scoreSystemDB = db;
                     }
                 }
             });
-
-
         });
 
-        // 加载数据
+        // 加载班级学生数据 (原有的逻辑)
         async function loadClassData(classId) {
             const { data, error } = await client
                 .from('students')
                 .select('id, name, identity, group, score, seat')
                 .eq('class_name', classId);
+
             if (error) {
-                console.error(error);
-                return;
-            }
-            studentsData = (data || []).sort((a, b) => {
-                const seatA = a.seat;
-                const seatB = b.seat;
-                if (!seatA && seatB) return 1;
-                if (seatA && !seatB) return -1;
-                if (seatA && seatB) return seatA - seatB;
-                return 0;
-            });
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('data-table').style.display = 'table';
-            renderTable();
+            console.error(error);
+            return;
         }
-
-        // 渲染表格
-        function renderTable() {
-            const listEl = document.getElementById('student-list');
-            listEl.innerHTML = '';
-            studentsData.forEach(stu => {
-                const stuId = String(stu.id);
-                const identityConfig = db.identities?.find(i => i.name === stu.identity) || { name: '平民', color: '#b2bec3' };
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${stu.seat || '-'}</td>
-                    <td><a href="student.html?id=${stuId}" class="stu-link">${stu.name}</a></td>
-                    <td>
-                        <span class="badge" style="background-color: ${identityConfig.color};">
-                            ${stu.identity || '平民'}
-                        </span>
-                    </td>
-                    <td>${stu.group || '-'}</td>
-                    <td style="font-weight:bold; color:var(--primary); font-size:1.2rem;">${stu.score}</td>
-                    <td>
-                        <div class="action-cell">
-                            <button class="mini-btn btn-score" onclick="openScoreModal('${stuId}')">💰 积分</button>
-                            <button class="mini-btn btn-edit" onclick="openEditModal('${stuId}')">✏️ 修改</button>
-                        </div>
-                    </td>
-                `;
-                listEl.appendChild(row);
-            });
-        }
-
-        // --- 弹窗与逻辑 ---
-        window.openScoreModal = function(id) {
-            const stu = studentsData.find(s => String(s.id) === String(id));
-            if (!stu) return;
-            document.getElementById('score-stu-id').value = id;
-            document.getElementById('score-stu-name').innerText = stu.name;
-            
-            // 重置表单
-            document.getElementById('select-add').value = "0";
-            document.getElementById('select-sub').value = "0";
-            document.getElementById('custom-reason').value = "";
-            document.getElementById('custom-score').value = "";
-            
-            fillScoreSelectOptions();
-            updateScorePreview();
-            document.getElementById('scoreModal').style.display = 'block';
-        }
-
-        function fillScoreSelectOptions() {
-            const addSelect = document.getElementById('select-add');
-            const subSelect = document.getElementById('select-sub');
-            addSelect.innerHTML = '<option value="0">✅ 选择加分项目</option>';
-            subSelect.innerHTML = '<option value="0">❌ 选择扣分项目</option>';
-            if (!db.items) return;
-            db.items.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.score;
-                option.text = `${item.name} (${item.score > 0 ? '+' : ''}${item.score})`;
-                (item.score > 0 ? addSelect : subSelect).appendChild(option);
-            });
-        }
-
-        // 新增：处理互斥选择逻辑
-        window.handleSelectChange = function(type) {
-            const addSelect = document.getElementById('select-add');
-            const subSelect = document.getElementById('select-sub');
-            
-            // 如果改变了加分，则扣分重置
-            if (type === 'add' && addSelect.value != "0") {
-                subSelect.value = "0";
-            }
-            // 如果改变了扣分，则加分重置
-            if (type === 'sub' && subSelect.value != "0") {
-                addSelect.value = "0";
-            }
-            updateScorePreview();
-        }
-
-        // 监听自定义输入框的变化
-        document.getElementById('custom-reason')?.addEventListener('input', updateScorePreview);
-        document.getElementById('custom-score')?.addEventListener('input', updateScorePreview);
-
-        function updateScorePreview() {
-            // 获取下拉框的值
-            const addVal = parseInt(document.getElementById('select-add').value) || 0;
-            const subVal = parseInt(document.getElementById('select-sub').value) || 0;
-            
-            // 获取自定义输入框的值
-            const customVal = parseInt(document.getElementById('custom-score').value) || 0;
-
-            // 优先使用自定义输入，如果没有输入则使用下拉框
-            let finalChange = customVal;
-            if (customVal === 0) {
-                finalChange = addVal + subVal;
-            }
-
-            const previewEl = document.getElementById('preview-score');
-            previewEl.innerText = (finalChange >= 0 ? '+' : '') + finalChange;
-            previewEl.style.color = finalChange > 0 ? 'var(--success)' : (finalChange < 0 ? 'var(--danger)' : 'inherit');
-        }
-
-        // --- 核心修改：提交积分逻辑 ---
-        window.submitScore = async function() {
-            const id = document.getElementById('score-stu-id').value;
-            
-            // 1. 获取自定义输入
-            const customReason = document.getElementById('custom-reason').value.trim();
-            const customScore = parseInt(document.getElementById('custom-score').value) || 0;
-
-            // 2. 获取下拉框选择
-            const addScore = parseInt(document.getElementById('select-add').value) || 0;
-            const subScore = parseInt(document.getElementById('select-sub').value) || 0;
-
-            let change = 0;
-            let reason = '';
-
-            // 3. 逻辑判断：优先使用自定义，否则使用预设
-            if (customReason && customScore !== 0) {
-                change = customScore;
-                reason = customReason;
-        // ... (接上一段代码的 submitScore 函数) ...
-            } else {
-                change = addScore + subScore;
-                if (change === 0) {
-                    alert('请选择项目或输入自定义分数！');
-                    return;
-                }
-                // 使用预设项目的名称作为理由
-                if (change > 0) {
-                    reason = document.getElementById('select-add').selectedOptions[0].text;
-                } else {
-                    reason = document.getElementById('select-sub').selectedOptions[0].text;
-                }
-            }
-
-            const stu = studentsData.find(s => String(s.id) === String(id));
-            if (!stu) return;
-
-            // 更新总分
-            stu.score += change;
-            
-            // 1. 更新学生总分
-            await client.from('students').update({ score: stu.score }).eq('id', id);
-
-            // 2. 写入历史记录
-    // ✅ 修复并强化：明确区分操作人身份
-    let operatorName = '';
-    if (currentRole === 'representative') {
-        operatorName = '课代表';
-    } else {
-        operatorName = '教师'; // 默认为教师
+        
+        studentsData = (data || []).sort((a, b) => {
+            const seatA = a.seat;
+            const seatB = b.seat;
+            if (!seatA && seatB) return 1;
+            if (seatA && !seatB) return -1;
+            if (seatA && seatB) return seatA - seatB;
+            return 0;
+        });
+        
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('data-table').style.display = 'table';
+        renderTable();
     }
 
-            await client.from('score_history').insert({
-                student_id: id,
-                operator: operatorName, 
-                score_change: change,
-                reason: reason, // 使用上面逻辑判断出的 reason
-                class_name: currentClassId
-            });
+    // 渲染表格
+    function renderTable() {
+        const listEl = document.getElementById('student-list');
+        listEl.innerHTML = '';
+        studentsData.forEach(stu => {
+            const stuId = String(stu.id);
+            // ✅ 使用云端加载的 db.identities 数据
+            const identityConfig = db.identities?.find(i => i.name === stu.identity) || { name: '平民', color: '#b2bec3' };
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${stu.seat || '-'}</td>
+                <td><a href="student.html?id=${stuId}" class="stu-link">${stu.name}</a></td>
+                <td>
+                    <span class="badge" style="background-color: ${identityConfig.color};">
+                        ${stu.identity || '平民'}
+                    </span>
+                </td>
+                <td>${stu.group || '-'}</td>
+                <td style="font-weight:bold; color:var(--primary); font-size:1.2rem;">${stu.score}</td>
+                <td>
+                    <div class="action-cell">
+                        <button class="mini-btn btn-score" onclick="openScoreModal('${stuId}')">💰 积分</button>
+                        <button class="mini-btn btn-edit" onclick="openEditModal('${stuId}')">✏️ 修改</button>
+                    </div>
+                </td>
+            `;
+            listEl.appendChild(row);
+        });
+    }
 
-            alert(`操作成功！变动分数：${change > 0 ? '+' : ''}${change}`);
-            closeModal('scoreModal');
-            renderTable();
+    // --- 弹窗与逻辑 ---
+
+    window.openScoreModal = function(id) {
+        const stu = studentsData.find(s => String(s.id) === String(id));
+        if (!stu) return;
+        document.getElementById('score-stu-id').value = id;
+        document.getElementById('score-stu-name').innerText = stu.name;
+        
+        // 重置表单
+        document.getElementById('select-add').value = "0";
+        document.getElementById('select-sub').value = "0";
+        document.getElementById('custom-reason').value = "";
+        document.getElementById('custom-score').value = "";
+        
+        // ✅ 填充选项时使用云端加载的 db.items 数据
+        fillScoreSelectOptions();
+        updateScorePreview();
+        document.getElementById('scoreModal').style.display = 'block';
+    }
+
+    function fillScoreSelectOptions() {
+        const addSelect = document.getElementById('select-add');
+        const subSelect = document.getElementById('select-sub');
+        addSelect.innerHTML = '<option value="0">✅ 选择加分项目</option>';
+        subSelect.innerHTML = '<option value="0">❌ 选择扣分项目</option>';
+        
+        // ✅ 直接使用云端同步的 db.items
+        if (!db.items) return;
+        db.items.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.score;
+            option.text = `${item.name} (${item.score > 0 ? '+' : ''}${item.score})`;
+            (item.score > 0 ? addSelect : subSelect).appendChild(option);
+        });
+    }
+
+    // 新增：处理互斥选择逻辑
+    window.handleSelectChange = function(type) {
+        const addSelect = document.getElementById('select-add');
+        const subSelect = document.getElementById('select-sub');
+        // 如果改变了加分，则扣分重置
+        if (type === 'add' && addSelect.value != "0") {
+            subSelect.value = "0";
         }
-
-        // --- 修改信息逻辑 ---
-        window.openEditModal = function(id) {
-            const stu = studentsData.find(s => String(s.id) === String(id));
-            if (!stu) return;
-            document.getElementById('edit-id').value = stu.id;
-            document.getElementById('edit-name').value = stu.name;
-            document.getElementById('edit-group').value = stu.group || '';
-            
-            // 填充身份选项
-            const identitySelect = document.getElementById('edit-identity');
-            identitySelect.innerHTML = '';
-            (db.identities || []).forEach(ident => {
-                const option = document.createElement('option');
-                option.value = ident.name;
-                option.text = ident.name;
-                identitySelect.add(option);
-            });
-            identitySelect.value = stu.identity;
-
-            // 填充座位号
-            document.getElementById('edit-seat-no').value = stu.seat || '';
-            document.getElementById('editModal').style.display = 'block';
+        // 如果改变了扣分，则加分重置
+        if (type === 'sub' && subSelect.value != "0") {
+            addSelect.value = "0";
         }
+        updateScorePreview();
+    }
 
-        window.submitEdit = async function() {
-            const id = document.getElementById('edit-id').value;
-            const newName = document.getElementById('edit-name').value;
-            const newIdentity = document.getElementById('edit-identity').value;
-            const newGroup = document.getElementById('edit-group').value;
-            const newSeatNo = document.getElementById('edit-seat-no').value;
+    // 监听自定义输入框的变化
+    document.getElementById('custom-reason')?.addEventListener('input', updateScorePreview);
+    document.getElementById('custom-score')?.addEventListener('input', updateScorePreview);
 
-            await client.from('students').update({
-                name: newName,
-                identity: newIdentity,
-                group: newGroup,
-                seat: newSeatNo
-            }).eq('id', id);
+    function updateScorePreview() {
+        // 获取下拉框的值
+        const addVal = parseInt(document.getElementById('select-add').value) || 0;
+        const subVal = parseInt(document.getElementById('select-sub').value) || 0;
+        // 获取自定义输入框的值
+        const customVal = parseInt(document.getElementById('custom-score').value) || 0;
 
-            // 更新本地数据
-            const stu = studentsData.find(s => String(s.id) === String(id));
-            stu.name = newName;
-            stu.identity = newIdentity;
-            stu.group = newGroup;
-            stu.seat = newSeatNo;
-            renderTable();
-            closeModal('editModal');
+        // 优先使用自定义输入，如果没有输入则使用下拉框
+        let finalChange = customVal;
+        if (customVal === 0) {
+            finalChange = addVal + subVal;
         }
+        
+        const previewEl = document.getElementById('preview-score');
+        previewEl.innerText = (finalChange >= 0 ? '+' : '') + finalChange;
+        previewEl.style.color = finalChange > 0 ? 'var(--success)' : (finalChange < 0 ? 'var(--danger)' : 'inherit');
+    }
 
-        window.closeModal = function(id) {
-            document.getElementById(id).style.display = 'none';
+    // --- 核心修改：提交积分逻辑 ---
+    window.submitScore = async function() {
+        const id = document.getElementById('score-stu-id').value;
+        
+        // 1. 获取自定义输入
+        const customReason = document.getElementById('custom-reason').value.trim();
+        const customScore = parseInt(document.getElementById('custom-score').value) || 0;
+        
+        // 2. 获取下拉框选择
+        const addScore = parseInt(document.getElementById('select-add').value) || 0;
+        const subScore = parseInt(document.getElementById('select-sub').value) || 0;
+        
+        let change = 0;
+        let reason = '';
+
+        // 3. 逻辑判断：优先使用自定义，否则使用预设
+        if (customReason && customScore !== 0) {
+            change = customScore;
+            reason = customReason;
+        } else {
+            change = addScore + subScore;
+            if (change === 0) {
+                alert('请选择项目或输入自定义分数！');
+                return;
+            }
+            // 使用预设项目的名称作为理由
+            if (change > 0) {
+                reason = document.getElementById('select-add').selectedOptions[0].text;
+            } else {
+                reason = document.getElementById('select-sub').selectedOptions[0].text;
+            }
         }
+        
+        const stu = studentsData.find(s => String(s.id) === String(id));
+        if (!stu) return;
+
+        // 更新总分
+        stu.score += change;
+        
+        // 1. 更新学生总分
+        await client.from('students').update({ score: stu.score }).eq('id', id);
+        
+        // 2. 写入历史记录
+        // ✅ 修复并强化：明确区分操作人身份
+        let operatorName = '';
+        if (currentRole === 'representative') {
+            operatorName = '课代表';
+        } else {
+            operatorName = '教师'; // 默认为教师
+        }
+        
+        await client.from('score_history').insert({
+            student_id: id,
+            operator: operatorName,
+            score_change: change,
+            reason: reason, // 使用上面逻辑判断出的 reason
+            class_name: currentClassId
+        });
+        
+        alert(`操作成功！变动分数：${change > 0 ? '+' : ''}${change}`);
+        closeModal('scoreModal');
+        renderTable();
+    }
+
+    // --- 修改信息逻辑 ---
+    window.openEditModal = function(id) {
+        const stu = studentsData.find(s => String(s.id) === String(id));
+        if (!stu) return;
+        
+        document.getElementById('edit-id').value = stu.id;
+        document.getElementById('edit-name').value = stu.name;
+        document.getElementById('edit-group').value = stu.group || '';
+        
+        // 填充身份选项
+        const identitySelect = document.getElementById('edit-identity');
+        identitySelect.innerHTML = '';
+        
+        // ✅ 使用云端加载的 db.identities 数据
+        (db.identities || []).forEach(ident => {
+            const option = document.createElement('option');
+            option.value = ident.name;
+            option.text = ident.name;
+            identitySelect.add(option);
+        });
+        
+        identitySelect.value = stu.identity;
+        
+        // 填充座位号
+        document.getElementById('edit-seat-no').value = stu.seat || '';
+        document.getElementById('editModal').style.display = 'block';
+    }
+
+    window.submitEdit = async function() {
+        const id = document.getElementById('edit-id').value;
+        const newName = document.getElementById('edit-name').value;
+        const newIdentity = document.getElementById('edit-identity').value;
+        const newGroup = document.getElementById('edit-group').value;
+        const newSeatNo = document.getElementById('edit-seat-no').value;
+        
+        await client.from('students').update({
+            name: newName,
+            identity: newIdentity,
+            group: newGroup,
+            seat: newSeatNo
+        }).eq('id', id);
+        
+        // 更新本地数据
+        const stu = studentsData.find(s => String(s.id) === String(id));
+        stu.name = newName;
+        stu.identity = newIdentity;
+        stu.group = newGroup;
+        stu.seat = newSeatNo;
+        
+        renderTable();
+        closeModal('editModal');
+    }
+
+    window.closeModal = function(id) {
+        document.getElementById(id).style.display = 'none';
+    }
     </script>
 </body>
 </html>
