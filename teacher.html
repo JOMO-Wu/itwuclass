@@ -553,7 +553,7 @@ window.deleteItem = async function(index) {
                     div.className = 'class-item';
 div.innerHTML = ` 
     <button class="del-btn" onclick="deleteClass('${id}')">×</button> 
-    <div onclick="location.href='class.html?id=${id}&source=teacher'">${id}班</div> 
+    <div onclick="location.href='class.html?id=${id}&source=teacher&role=teacher'">${id}班</div> 
 `;
                     list.appendChild(div);
                 });

@@ -354,62 +354,54 @@
 
     <script>
 
-        // --- 🛡️ 安全守卫代码：防止未登录直接通过 URL 进入 --- 
-const auth = JSON.parse(localStorage.getItem('scoreSystemAuth'));
+// --- 🛡️ 安全守卫代码：防止未登录直接通过 URL 进入 ---
+const authData = JSON.parse(localStorage.getItem('scoreSystemAuth'));
 
-// 1. 检查是否登录
-if (!auth || !auth.authenticated) {
+// 1. 检查是否存在登录凭证
+if (!authData || !authData.authenticated) {
     alert('⚠️ 请先登录！');
-    localStorage.removeItem('scoreSystemAuth'); // 清理无效数据
-    window.location.href = 'login.html';
+    // 跳转回登录页，并携带当前想要访问的路径，以便登录后自动跳回
+    window.location.href = `login.html?redirect=class.html&id=${urlParams.get('id')}&role=${urlParams.get('role')}`;
     throw new Error("未授权访问");
 }
 
-// 2. 检查 URL 参数与登录身份是否匹配
+// 2. 解析当前 URL 参数
 const urlParams = new URLSearchParams(window.location.search);
 const urlClassId = urlParams.get('id');
 const urlRole = urlParams.get('role'); // student 或 teacher
 const urlUser = urlParams.get('user');
 
-// 情况 A: 如果是学生登录 (student)
-if (auth.role === 'student') {
-    // 允许访问的条件：
-    // 1. URL 角色必须是 student
-    // 2. URL 中的班级 ID 必须与登录时存储的 classId 一致 (如果是班级特殊账号)
-    // 3. 或者是普通学号登录 (此时 auth.classId 可能不存在，但 user 参数必须匹配)
-    
-    const isClassLogin = auth.classId; // 是否是班级特殊账号 (xxk) 登录
-    
-    if (urlRole !== 'student') {
-        alert('❌ 身份权限不匹配：请先登录！！');
-        window.location.href = 'login.html';
-    }
-    
-    // 如果是班级特殊账号登录，校验班级 ID
-    if (isClassLogin && urlClassId !== auth.classId) {
+// 3. 核心权限校验逻辑
+// 情况 A: 如果是学生身份登录 (authData.role === 'student')
+if (authData.role === 'student') {
+    // 学生只能访问自己的班级 ID (如果是班级特殊账号登录)
+    if (authData.classId && urlClassId !== authData.classId) {
         alert('❌ 无权访问该班级数据');
         window.location.href = 'login.html';
     }
-    // 如果是普通学号登录，校验学号
-    else if (!isClassLogin && urlUser && !urlUser.endsWith('xxk')) {
-        // 普通学号登录时，user 参数应为学号
-        if (urlUser !== auth.user) {
-            alert('❌ 无权访问他人页面');
-            window.location.href = 'login.html';
-        }
+    // 学生只能访问自己的 user ID (如果是普通学号登录)
+    else if (authData.user && urlUser !== authData.user) {
+        alert('❌ 无权访问他人页面');
+        window.location.href = 'login.html';
     }
-    // 如果身份校验通过，继续执行后续代码
-} 
-// 情况 B: 如果是教师登录 (teacher)
-else if (auth.role === 'teacher') {
-    if (urlRole !== 'teacher') {
-        alert('❌ 身份权限不匹配：请先登录！！');
+    // 角色必须匹配
+    else if (urlRole !== 'student') {
+        alert('❌ 身份不匹配');
         window.location.href = 'login.html';
     }
 } 
-// 情况 C: 身份不匹配
+// 情况 B: 如果是教师身份登录 (authData.role === 'teacher')
+else if (authData.role === 'teacher') {
+    // 教师可以访问任意班级，但 URL 中的角色必须是 teacher
+    if (urlRole !== 'teacher') {
+        alert('❌ 身份不匹配');
+        window.location.href = 'login.html';
+    }
+    // ✅ 这里允许教师进入 class.html
+} 
+// 情况 C: 无效身份
 else {
-    alert('❌ 身份验证失败，请重新登录');
+    alert('❌ 身份验证失败');
     localStorage.removeItem('scoreSystemAuth');
     window.location.href = 'login.html';
 }
