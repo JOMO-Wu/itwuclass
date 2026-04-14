@@ -198,7 +198,7 @@
     <div class="container">
         <!-- 左侧：学生表格 -->
         <div class="card">
-            <h2>📋 学生名单</h2>
+            <h2>📋 学生名单 (*´ω`)人(´ω`*)</h2>
             <div id="loading">加载中...</div>
             <div id="table-container" style="display: none;">
                 <table id="students-table">
@@ -220,7 +220,7 @@
 
         <!-- 中间：个人积分排行榜 -->
         <div class="card">
-            <h2>🏆 个人排行榜</h2>
+            <h2>🏆 个人排行榜 (　ﾟ∀ﾟ) ﾉ♡</h2>
             <div id="leaderboard-list">
                 <!-- 数据将由 JS 注入 -->
             </div>
@@ -259,7 +259,7 @@
                 document.getElementById('loading').innerText = '错误：未指定班级ID';
                 return;
             }
-            document.getElementById('page-title').innerText = `${classId}班 排行榜`;
+            document.getElementById('page-title').innerText = `${classId}班 排行榜 (✪ω✪)`;
 
             // ✅ 第一步：从数据库加载身份配置
             const configLoaded = await loadIdentityConfigFromDB();
@@ -359,7 +359,7 @@
 
                     // 6.2 渲染个人排行榜 (逻辑保持不变)
                     const rankedStudents = students
-                        .filter(s => s.score > 0)
+                        .filter(s => s.score != 0)
                         .sort((a, b) => b.score - a.score);
 
                     leaderboardContainer.innerHTML = '';

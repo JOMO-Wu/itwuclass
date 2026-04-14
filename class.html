@@ -353,6 +353,68 @@
     </div>
 
     <script>
+
+        // --- 🛡️ 安全守卫代码：防止未登录直接通过 URL 进入 --- 
+const auth = JSON.parse(localStorage.getItem('scoreSystemAuth'));
+
+// 1. 检查是否登录
+if (!auth || !auth.authenticated) {
+    alert('⚠️ 请先登录！');
+    localStorage.removeItem('scoreSystemAuth'); // 清理无效数据
+    window.location.href = 'login.html';
+    throw new Error("未授权访问");
+}
+
+// 2. 检查 URL 参数与登录身份是否匹配
+const urlParams = new URLSearchParams(window.location.search);
+const urlClassId = urlParams.get('id');
+const urlRole = urlParams.get('role'); // student 或 teacher
+const urlUser = urlParams.get('user');
+
+// 情况 A: 如果是学生登录 (student)
+if (auth.role === 'student') {
+    // 允许访问的条件：
+    // 1. URL 角色必须是 student
+    // 2. URL 中的班级 ID 必须与登录时存储的 classId 一致 (如果是班级特殊账号)
+    // 3. 或者是普通学号登录 (此时 auth.classId 可能不存在，但 user 参数必须匹配)
+    
+    const isClassLogin = auth.classId; // 是否是班级特殊账号 (xxk) 登录
+    
+    if (urlRole !== 'student') {
+        alert('❌ 身份权限不匹配：请先登录！！');
+        window.location.href = 'login.html';
+    }
+    
+    // 如果是班级特殊账号登录，校验班级 ID
+    if (isClassLogin && urlClassId !== auth.classId) {
+        alert('❌ 无权访问该班级数据');
+        window.location.href = 'login.html';
+    }
+    // 如果是普通学号登录，校验学号
+    else if (!isClassLogin && urlUser && !urlUser.endsWith('xxk')) {
+        // 普通学号登录时，user 参数应为学号
+        if (urlUser !== auth.user) {
+            alert('❌ 无权访问他人页面');
+            window.location.href = 'login.html';
+        }
+    }
+    // 如果身份校验通过，继续执行后续代码
+} 
+// 情况 B: 如果是教师登录 (teacher)
+else if (auth.role === 'teacher') {
+    if (urlRole !== 'teacher') {
+        alert('❌ 身份权限不匹配：请先登录！！');
+        window.location.href = 'login.html';
+    }
+} 
+// 情况 C: 身份不匹配
+else {
+    alert('❌ 身份验证失败，请重新登录');
+    localStorage.removeItem('scoreSystemAuth');
+    window.location.href = 'login.html';
+}
+// --- 🛡️ 安全守卫代码结束 ---
+
         // ⚙️ 配置
         const SUPABASE_URL = 'https://uhtdrmsznjvgkvshcsxh.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_RYMlvLaXEzLP0NtuJ_WIBg_pGpaOyQB';
