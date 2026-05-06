@@ -198,7 +198,7 @@
     <div class="container">
         <!-- 左侧：学生表格 -->
         <div class="card">
-            <h2>📋 学生名单 (*´ω`)人(´ω`*)</h2>
+            <h2>📋 学生名单</h2>
             <div id="loading">加载中...</div>
             <div id="table-container" style="display: none;">
                 <table id="students-table">
@@ -259,7 +259,7 @@
                 document.getElementById('loading').innerText = '错误：未指定班级ID';
                 return;
             }
-            document.getElementById('page-title').innerText = `${classId}班 排行榜 (✪ω✪)`;
+            document.getElementById('page-title').innerText = `${classId}班 排行榜 `;
 
             // ✅ 第一步：从数据库加载身份配置
             const configLoaded = await loadIdentityConfigFromDB();
